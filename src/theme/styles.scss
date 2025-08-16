@@ -1,0 +1,64 @@
+@forward './material.scss';
+@forward 'fonts/roboto.css';
+
+@forward './ionic';
+@forward './ionic-variables';
+
+.container {
+  width: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header-md {
+  // Lighten shadow from material header
+  box-shadow:
+    0 1px 0px -1px rgba(0, 0, 0, 0.2),
+    0 -1px 8px 0 rgba(0, 0, 0, 0.14),
+    0 1px 2px 0 rgba(0, 0, 0, 0.12);
+}
+
+body {
+  --mdc-typography-button-letter-spacing: normal;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+
+  --app-divider-color: rgba(255, 255, 255, 0.2);
+  --app-tinted-background-color: rgba(255, 255, 255, 0.1);
+  --app-accent-color: #667eea;
+  --app-secondary-color: #764ba2;
+
+  @media (prefers-color-scheme: dark) {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+
+    --app-divider-color: rgba(255, 255, 255, 0.15);
+    --app-tinted-background-color: rgba(255, 255, 255, 0.05);
+    --app-accent-color: #3498db;
+    --app-secondary-color: #2c3e50;
+  }
+
+  &.embed {
+    ion-header,
+    ion-tab-bar,
+    #input-mode-group,
+    app-send-feedback {
+      display: none !important;
+    }
+  }
+}
+
+.actions-row {
+  position: absolute;
+  margin: 14px;
+  bottom: 0;
+  right: 0;
+  text-align: end;
+  width: calc(100% - 2 * 14px);
+}
+
+ion-header ion-button {
+  text-transform: none;
+}
