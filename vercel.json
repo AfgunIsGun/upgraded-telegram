@@ -3,17 +3,18 @@
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/node",
+      "use": "@vercel/static-build",
       "config": {
         "installCommand": "npm install",
-        "buildCommand": "npm run build:full"
+        "buildCommand": "npm run build",
+        "outputDir": "dist/sign-translate/browser"
       }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "dist/sign-translate/server/server.mjs"
+      "dest": "/index.html"
     }
   ]
 }
