@@ -23,21 +23,111 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  // Advanced gradient system with multiple layers
+  background:
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%),
+    linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
   min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
 
-  --app-divider-color: rgba(255, 255, 255, 0.2);
-  --app-tinted-background-color: rgba(255, 255, 255, 0.1);
-  --app-accent-color: #667eea;
-  --app-secondary-color: #764ba2;
+  // Advanced CSS custom properties for theming
+  --app-primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --app-secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --app-accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --app-success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --app-warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+
+  --app-glass-bg: rgba(255, 255, 255, 0.1);
+  --app-glass-border: rgba(255, 255, 255, 0.2);
+  --app-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --app-glass-backdrop: blur(20px);
+
+  --app-text-primary: rgba(255, 255, 255, 0.95);
+  --app-text-secondary: rgba(255, 255, 255, 0.7);
+  --app-text-muted: rgba(255, 255, 255, 0.5);
+
+  --app-divider-color: rgba(255, 255, 255, 0.15);
+  --app-tinted-background-color: rgba(255, 255, 255, 0.05);
+
+  // Animation variables
+  --app-transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --app-transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --app-transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Spacing system
+  --app-spacing-xs: 4px;
+  --app-spacing-sm: 8px;
+  --app-spacing-md: 16px;
+  --app-spacing-lg: 24px;
+  --app-spacing-xl: 32px;
+  --app-spacing-2xl: 48px;
+
+  // Border radius system
+  --app-radius-sm: 8px;
+  --app-radius-md: 12px;
+  --app-radius-lg: 16px;
+  --app-radius-xl: 24px;
+  --app-radius-full: 50%;
 
   @media (prefers-color-scheme: dark) {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+    background:
+      radial-gradient(circle at 20% 80%, rgba(45, 55, 72, 0.4) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(74, 85, 104, 0.4) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(26, 32, 44, 0.3) 0%, transparent 50%),
+      linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #4a5568 100%) !important;
 
-    --app-divider-color: rgba(255, 255, 255, 0.15);
-    --app-tinted-background-color: rgba(255, 255, 255, 0.05);
-    --app-accent-color: #3498db;
-    --app-secondary-color: #2c3e50;
+    --app-primary-gradient: linear-gradient(135deg, #3182ce 0%, #553c9a 100%);
+    --app-secondary-gradient: linear-gradient(135deg, #d53f8c 0%, #e53e3e 100%);
+    --app-accent-gradient: linear-gradient(135deg, #3182ce 0%, #00b4d8 100%);
+
+    --app-glass-bg: rgba(26, 32, 44, 0.8);
+    --app-glass-border: rgba(255, 255, 255, 0.1);
+    --app-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+    --app-text-primary: rgba(255, 255, 255, 0.95);
+    --app-text-secondary: rgba(255, 255, 255, 0.7);
+    --app-text-muted: rgba(255, 255, 255, 0.4);
+
+    --app-divider-color: rgba(255, 255, 255, 0.1);
+    --app-tinted-background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  // Animated background particles
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    background-image:
+      radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 2px, transparent 2px),
+      radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size:
+      100px 100px,
+      50px 50px;
+    animation: float-particles 20s ease-in-out infinite;
+  }
+
+  // Mesh gradient overlay
+  &::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse at top, rgba(255, 255, 255, 0.1) 0%, transparent 70%),
+      radial-gradient(ellipse at bottom, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+    animation: mesh-gradient 15s ease-in-out infinite alternate;
   }
 
   &.embed {
@@ -61,4 +151,219 @@ body {
 
 ion-header ion-button {
   text-transform: none;
+}
+
+// Advanced animation keyframes
+@keyframes float-particles {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(-20px) rotate(90deg);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-10px) rotate(180deg);
+    opacity: 0.6;
+  }
+  75% {
+    transform: translateY(-30px) rotate(270deg);
+    opacity: 0.8;
+  }
+}
+
+@keyframes mesh-gradient {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1) rotate(180deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.05) rotate(360deg);
+    opacity: 0.4;
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes slide-in-up {
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-down {
+  from {
+    transform: translateY(-100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-scale {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Utility classes for modern design
+.glass-card {
+  background: var(--app-glass-bg);
+  backdrop-filter: var(--app-glass-backdrop);
+  border: 1px solid var(--app-glass-border);
+  border-radius: var(--app-radius-lg);
+  box-shadow: var(--app-glass-shadow);
+  transition: var(--app-transition-normal);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.gradient-text {
+  background: var(--app-primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 600;
+}
+
+.floating-element {
+  animation: float-particles 6s ease-in-out infinite;
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.slide-in-up {
+  animation: slide-in-up 0.6s var(--app-transition-normal);
+}
+
+.slide-in-down {
+  animation: slide-in-down 0.6s var(--app-transition-normal);
+}
+
+.fade-in-scale {
+  animation: fade-in-scale 0.5s var(--app-transition-normal);
+}
+
+// Modern button styles
+.modern-button {
+  background: var(--app-primary-gradient);
+  border: none;
+  border-radius: var(--app-radius-md);
+  color: white;
+  padding: var(--app-spacing-md) var(--app-spacing-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--app-transition-normal);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: var(--app-transition-normal);
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+
+    &::before {
+      left: 100%;
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Advanced card layouts
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--app-spacing-lg);
+  padding: var(--app-spacing-lg);
+}
+
+.feature-card {
+  @extend .glass-card;
+  padding: var(--app-spacing-xl);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: rotate 10s linear infinite;
+    opacity: 0;
+    transition: var(--app-transition-normal);
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive design utilities
+@media (max-width: 768px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: var(--app-spacing-md);
+    padding: var(--app-spacing-md);
+  }
+
+  .feature-card {
+    padding: var(--app-spacing-lg);
+  }
 }
