@@ -1,15 +1,11 @@
-<ion-header [translucent]="true" class="modern-header">
+<ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-buttons slot="secondary">
-      <app-theme-toggle></app-theme-toggle>
-    </ion-buttons>
     <ion-buttons slot="primary">
-      <ion-button routerLink="/about" queryParamsHandling="preserve" color="primary" shape="round" fill="solid" class="modern-btn">
+      <ion-button routerLink="/about" queryParamsHandling="preserve" color="primary" shape="round" fill="solid">
         {{ 'landing.about.title' | transloco }}
-        <ion-icon name="information-circle" slot="end"></ion-icon>
       </ion-button>
     </ion-buttons>
-    <ion-title class="modern-title">
+    <ion-title>
       <app-logo [text]="'translate.logo' | transloco" />
     </ion-title>
   </ion-toolbar>

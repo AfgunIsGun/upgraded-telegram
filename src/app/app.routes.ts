@@ -31,6 +31,10 @@ export const routes: Routes = [
         ],
       },
       {
+        path: 'output',
+        loadComponent: () => import('./pages/output-only/output-only.component').then(m => m.OutputOnlyComponent),
+      },
+      {
         path: 'translate',
         redirectTo: '',
       },

@@ -5,7 +5,6 @@
   width: 100%;
   grid-template-areas: 'spoken signwriting signed';
   grid-template-columns: auto 100px 50%;
-  gap: 2px;
 
   @media #{breakpoints.$breakpoint-lt-sm} {
     grid-template-areas: 'signed signed' 'spoken signwriting';
@@ -18,26 +17,10 @@
 
   > *:not(:last-child) {
     border-inline-end: 1px solid var(--app-divider-color);
-    position: relative;
-    
-    &::after {
-      content: '';
-      position: absolute;
-      right: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 2px;
-      height: 60%;
-      background: linear-gradient(to bottom, transparent, var(--app-accent-color), transparent);
-      opacity: 0.6;
-    }
   }
 }
 
 app-sign-writing {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(5px);
-  
   @media #{breakpoints.$breakpoint-lt-sm} {
     border: none !important;
     height: 195px;
@@ -46,6 +29,4 @@ app-sign-writing {
 
 app-signed-language-output {
   grid-area: signed;
-  background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(5px);
 }
