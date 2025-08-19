@@ -93,7 +93,11 @@
             "namedChunks": true,
             "webWorkerTsConfig": "tsconfig.worker.json",
             "browser": "src/main.ts",
-            "server": "src/main.server.ts"
+            "server": "src/main.server.ts",
+            "prerender": true,
+            "ssr": {
+              "entry": "src/server.ts"
+            }
           },
           "configurations": {
             "production": {
@@ -134,7 +138,6 @@
               "Cross-Origin-Opener-Policy": "same-origin",
               "Cross-Origin-Embedder-Policy": "require-corp"
             },
-            "allowedHosts": ["4200-ipjk22wmw5yr856702is7-0cd21d5c.manusvm.computer"],
             "buildTarget": "sign-translate:build"
           },
           "configurations": {

@@ -1,0 +1,27 @@
+<div class="output-only-container">
+  @if (videoUrl) {
+    <video
+      [src]="safeVideoUrl"
+      autoplay
+      loop
+      muted
+      playsinline
+      height="100%"
+      width="100%"
+      (error)="onVideoError($event)"
+      (click)="playVideoIfPaused($event)"></video>
+  } @else {
+    @if (pose$ | async; as pose) {
+      @if (poseViewerSetting$ | async; as poseViewerSetting) {
+        @if (poseViewerSetting === 'pose') {
+          <app-skeleton-pose-viewer [src]="pose" />
+        } @else if (poseViewerSetting === 'person') {
+          <app-human-pose-viewer [src]="pose" />
+        } @else if (poseViewerSetting === 'avatar') {
+          <app-avatar-pose-viewer [src]="pose" />
+        }
+      }
+    }
+  }
+</div>
+

@@ -1,8 +1,5 @@
 :host {
   display: flex;
-  padding: 16px;
-  background: linear-gradient(90deg, var(--app-accent-color), var(--app-secondary-color));
-  backdrop-filter: blur(10px);
 
   &.spoken-to-signed {
     flex-direction: row-reverse;
@@ -11,45 +8,13 @@
 
 app-language-selector {
   width: calc(50% - 24px);
-  
-  &::ng-deep {
-    ion-select {
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 12px;
-      padding: 8px 16px;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      transition: all 0.3s ease;
-      
-      &:hover {
-        background: rgba(255, 255, 255, 1);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
-    }
-  }
 }
 
 #swap-languages {
   height: 48px;
   margin: 0;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: rotate(180deg) scale(1.1);
-  }
 
   &[disabled] {
     opacity: 0.5;
-  }
-
-  ion-icon {
-    color: white;
-    font-size: 20px;
   }
 }
