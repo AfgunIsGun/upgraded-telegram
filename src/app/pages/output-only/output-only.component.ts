@@ -9,6 +9,12 @@ import { AsyncPipe, TitleCasePipe } from '@angular/common';
 import { SkeletonPoseViewerComponent } from '../translate/pose-viewers/skeleton-pose-viewer/skeleton-pose-viewer.component';
 import { HumanPoseViewerComponent } from '../translate/pose-viewers/human-pose-viewer/human-pose-viewer.component';
 import { AvatarPoseViewerComponent } from '../translate/pose-viewers/avatar-pose-viewer/avatar-pose-viewer.component';
+import { 
+  SetSpokenLanguageText, 
+  SetSpokenLanguage, 
+  SetSignedLanguage, 
+  ChangeTranslation 
+} from '../../modules/translate/translate.actions';
 
 @Component({
   selector: 'app-output-only',
@@ -69,12 +75,21 @@ export class OutputOnlyComponent implements OnInit {
     this.hasError = false;
     
     try {
+      // Dispatch actions to update the store with translation parameters
       this.store.dispatch(new SetSpokenLanguageText(this.inputText));
       this.store.dispatch(new SetSpokenLanguage(this.fromLanguage));
       this.store.dispatch(new SetSignedLanguage(this.toLanguage));
+      
+      // Trigger the translation process
       this.store.dispatch(new ChangeTranslation());
-      this.isLoading = false;
+      
+      // Set loading to false after a short delay to allow the translation to process
+      setTimeout(() => {
+        this.isLoading = false;
+      }, 2000);
+      
     } catch (error) {
+      console.error('Translation error:', error);
       this.hasError = true;
       this.errorMessage = 'Translation failed. Please try again.';
       this.isLoading = false;
@@ -83,12 +98,16 @@ export class OutputOnlyComponent implements OnInit {
 
   onVideoError(event: Event): void {
     console.error('Video error:', event);
+    this.hasError = true;
+    this.errorMessage = 'Failed to load video. Please try again.';
   }
 
   playVideoIfPaused(event: Event): void {
     const videoElement = event.target as HTMLVideoElement;
     if (videoElement.paused) {
-      videoElement.play();
+      videoElement.play().catch(error => {
+        console.error('Failed to play video:', error);
+      });
     }
   }
 
@@ -97,4 +116,21 @@ export class OutputOnlyComponent implements OnInit {
       this.processTranslation();
     }
   }
+
+  // Helper method to get language display name
+  getLanguageDisplayName(code: string): string {
+    const languageMap: { [key: string]: string } = {
+      'en': 'English',
+      'de': 'German', 
+      'fr': 'French',
+      'es': 'Spanish',
+      'asl': 'American Sign Language',
+      'gsl': 'German Sign Language',
+      'fsl': 'French Sign Language',
+      'auto': 'Auto-detect'
+    };
+    
+    return languageMap[code] || code.toUpperCase();
+  }
 }
+
