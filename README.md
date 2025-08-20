@@ -150,6 +150,7 @@ npx cap run ios
 
 ### Cite
 
+
 ```bibtex
 @misc{moryossef2023signmt,
     title={sign.mt: Effortless Real-Time Sign Language Translation},
