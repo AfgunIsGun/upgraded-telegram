@@ -32,7 +32,7 @@ import { SetSetting } from '../../modules/settings/settings.actions';
 })
 export class OutputOnlyComponent implements OnInit {
   private store = inject(Store);
-  private sanitizer = inject(DomSanitizer);
+  private sanitizer = inject(DomSanSanitizer);
   private route = inject(ActivatedRoute);
 
   videoUrl: string | undefined;
@@ -61,7 +61,7 @@ export class OutputOnlyComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       this.inputText = params['text'] || '';
       this.fromLanguage = params['from'] || 'en';
-      this.toLanguage = params['to'] || 'ase'; // Convert 'asl' to 'ase' (American Sign Language)
+      this.toLanguage = params['to'] || 'ase'; 
       
       // Convert common language codes to the format expected by the backend
       if (this.toLanguage === 'asl') {
@@ -139,4 +139,5 @@ export class OutputOnlyComponent implements OnInit {
     return languageMap[code] || code.toUpperCase();
   }
 }
+
 
