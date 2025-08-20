@@ -69,13 +69,10 @@ export class OutputOnlyComponent implements OnInit {
     this.hasError = false;
     
     try {
-      // Simulate translation processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // For now, just show a placeholder message
-      // In a real implementation, you would call your translation service here
-      console.log(`Translating "${this.inputText}" from ${this.fromLanguage} to ${this.toLanguage}`);
-      
+      this.store.dispatch(new SetSpokenLanguageText(this.inputText));
+      this.store.dispatch(new SetSpokenLanguage(this.fromLanguage));
+      this.store.dispatch(new SetSignedLanguage(this.toLanguage));
+      this.store.dispatch(new ChangeTranslation());
       this.isLoading = false;
     } catch (error) {
       this.hasError = true;
