@@ -9,11 +9,11 @@ import { AsyncPipe, TitleCasePipe } from '@angular/common';
 import { SkeletonPoseViewerComponent } from '../translate/pose-viewers/skeleton-pose-viewer/skeleton-pose-viewer.component';
 import { HumanPoseViewerComponent } from '../translate/pose-viewers/human-pose-viewer/human-pose-viewer.component';
 import { AvatarPoseViewerComponent } from '../translate/pose-viewers/avatar-pose-viewer/avatar-pose-viewer.component';
-import { 
-  SetSpokenLanguageText, 
-  SetSpokenLanguage, 
-  SetSignedLanguage, 
-  ChangeTranslation 
+import {
+  SetSpokenLanguageText,
+  SetSpokenLanguage,
+  SetSignedLanguage,
+  ChangeTranslation
 } from '../../modules/translate/translate.actions';
 import { SetSetting } from '../../modules/settings/settings.actions';
 
@@ -39,7 +39,7 @@ export class OutputOnlyComponent implements OnInit {
   safeVideoUrl: SafeUrl | undefined;
   pose$: Observable<string> | undefined;
   poseViewerSetting$: Observable<PoseViewerSetting> | undefined;
-  
+
   // New properties for handling query parameters
   inputText: string = '';
   fromLanguage: string = '';
@@ -51,10 +51,10 @@ export class OutputOnlyComponent implements OnInit {
     // Initialize default settings like the main translate component
     this.store.dispatch([
       new SetSetting('receiveVideo', true),
-      new SetSetting('detectSign', false),
-      new SetSetting('drawSignWriting', false),
-      new SetSetting('drawPose', true),
-      new SetSetting('poseViewer', 'pose'),
+                        new SetSetting('detectSign', false),
+                        new SetSetting('drawSignWriting', false),
+                        new SetSetting('drawPose', true),
+                        new SetSetting('poseViewer', 'pose'),
     ]);
 
     // Handle query parameters
@@ -62,21 +62,21 @@ export class OutputOnlyComponent implements OnInit {
       this.inputText = params['text'] || '';
       this.fromLanguage = params['from'] || 'en';
       this.toLanguage = params['to'] || 'ase'; // Convert 'asl' to 'ase' (American Sign Language)
-      
-      // Convert common language codes to the format expected by the backend
-      if (this.toLanguage === 'asl') {
-        this.toLanguage = 'ase';
-      }
-      if (this.toLanguage === 'gsl') {
-        this.toLanguage = 'gsg';
-      }
-      if (this.toLanguage === 'fsl') {
-        this.toLanguage = 'fsl';
-      }
-      
-      if (this.inputText) {
-        this.processTranslation();
-      }
+
+    // Convert common language codes to the format expected by the backend
+    if (this.toLanguage === 'asl') {
+      this.toLanguage = 'ase';
+    }
+    if (this.toLanguage === 'gsl') {
+      this.toLanguage = 'gsg';
+    }
+    if (this.toLanguage === 'fsl') {
+      this.toLanguage = 'fsl';
+    }
+
+    if (this.inputText) {
+      this.processTranslation();
+    }
     });
 
     // Keep existing store subscriptions for backward compatibility
@@ -90,15 +90,13 @@ export class OutputOnlyComponent implements OnInit {
 
   private async processTranslation(): Promise<void> {
     try {
-      // Dispatch actions to update the store with translation parameters
-      // This follows the same pattern as the main translate component
-      this.store.dispatch(new SetSpokenLanguage(this.fromLanguage));
-      this.store.dispatch(new SetSignedLanguage(this.toLanguage));
-      this.store.dispatch(new SetSpokenLanguageText(this.inputText));
-      
-      // The SetSpokenLanguageText action automatically triggers ChangeTranslation
-      // so we don't need to dispatch it separately
-      
+      // First, set the languages
+      await this.store.dispatch(new SetSpokenLanguage(this.fromLanguage)).toPromise();
+      await this.store.dispatch(new SetSignedLanguage(this.toLanguage)).toPromise();
+
+      // Then set the text, which automatically triggers ChangeTranslation
+      await this.store.dispatch(new SetSpokenLanguageText(this.inputText)).toPromise();
+
     } catch (error) {
       console.error('Translation error:', error);
     }
@@ -127,7 +125,7 @@ export class OutputOnlyComponent implements OnInit {
   getLanguageDisplayName(code: string): string {
     const languageMap: { [key: string]: string } = {
       'en': 'English',
-      'de': 'German', 
+      'de': 'German',
       'fr': 'French',
       'es': 'Spanish',
       'ase': 'American Sign Language',
@@ -135,9 +133,7 @@ export class OutputOnlyComponent implements OnInit {
       'fsl': 'French Sign Language',
       'auto': 'Auto-detect'
     };
-    
+
     return languageMap[code] || code.toUpperCase();
   }
 }
-
-
