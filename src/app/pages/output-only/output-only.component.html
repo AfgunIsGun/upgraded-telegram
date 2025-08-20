@@ -2,144 +2,68 @@
   <!-- Loading state -->
   @if (isLoading) {
     <div class="loading-state">
-      <div class="spinner"></div>
       <p>Translating "{{ inputText }}" to {{ getLanguageDisplayName(toLanguage) }}...</p>
-      <div class="progress-bar">
-        <div class="progress-fill"></div>
-      </div>
     </div>
   }
   
   <!-- Error state -->
   @else if (hasError) {
     <div class="error-state">
-      <div class="error-icon">⚠️</div>
-      <h3>Translation Error</h3>
       <p>{{ errorMessage }}</p>
-      <button (click)="retry()" class="retry-btn">
-        <span>🔄</span>
-        Try Again
-      </button>
     </div>
   }
   
   <!-- Translation result with query parameters -->
   @else if (inputText) {
     <div class="translation-result">
-      <div class="result-header">
-        <h2>🤟 Translation Result</h2>
-        <div class="language-info">
-          <span class="from-lang">{{ getLanguageDisplayName(fromLanguage) }}</span>
-          <span class="arrow">→</span>
-          <span class="to-lang">{{ getLanguageDisplayName(toLanguage) }}</span>
+      <!-- Video display if available -->
+      @if (videoUrl) {
+        <div class="video-container">
+          <video
+            [src]="safeVideoUrl"
+            autoplay
+            loop
+            muted
+            playsinline
+            (error)="onVideoError($event)"
+            (click)="playVideoIfPaused($event)">
+            Your browser does not support the video tag.
+          </video>
         </div>
-      </div>
+      }
       
-      <div class="original-text">
-        <h3>📝 Original Text</h3>
-        <div class="text-content">{{ inputText }}</div>
-      </div>
-      
-      <div class="translated-content">
-        <h3>🤲 Sign Language Translation</h3>
-        
-        <!-- Video display if available -->
-        @if (videoUrl) {
-          <div class="video-container">
-            <video
-              [src]="safeVideoUrl"
-              autoplay
-              loop
-              muted
-              playsinline
-              controls
-              (error)="onVideoError($event)"
-              (click)="playVideoIfPaused($event)">
-              Your browser does not support the video tag.
-            </video>
+      <!-- If no video, check for pose data -->
+      @else {
+        <!-- Use a new @if block to correctly alias the async observable -->
+        @if (pose$ | async; as pose) {
+          <div class="pose-container">
+            @if (poseViewerSetting$ | async; as poseViewerSetting) {
+              @if (poseViewerSetting === 'pose') {
+                <app-skeleton-pose-viewer [src]="pose" />
+              } @else if (poseViewerSetting === 'person') {
+                <app-human-pose-viewer [src]="pose" />
+              } @else if (poseViewerSetting === 'avatar') {
+                <app-avatar-pose-viewer [src]="pose" />
+              }
+            }
           </div>
         }
         
-        <!-- If no video, check for pose data -->
+        <!-- Fallback display if no video and no pose -->
         @else {
-          <!-- Use a new @if block to correctly alias the async observable -->
-          @if (pose$ | async; as pose) {
-            <div class="pose-container">
-              @if (poseViewerSetting$ | async; as poseViewerSetting) {
-                @if (poseViewerSetting === 'pose') {
-                  <app-skeleton-pose-viewer [src]="pose" />
-                } @else if (poseViewerSetting === 'person') {
-                  <app-human-pose-viewer [src]="pose" />
-                } @else if (poseViewerSetting === 'avatar') {
-                  <app-avatar-pose-viewer [src]="pose" />
-                }
-              }
-            </div>
-          }
-          
-          <!-- Fallback display if no video and no pose -->
-          @else {
-            <div class="sign-display">
-              <div class="sign-animation">
-                <div class="avatar">
-                  <div class="avatar-face">🤟</div>
-                </div>
-              </div>
-              <div class="sign-info">
-                <p><strong>{{ inputText }}</strong></p>
-                <p class="translation-note">
-                  Sign language representation for {{ getLanguageDisplayName(toLanguage) }}
-                </p>
-                <div class="confidence-indicator">
-                  <span>Confidence: </span>
-                  <div class="confidence-bar">
-                    <div class="confidence-fill" style="width: 92%;"></div>
-                  </div>
-                  <span>92%</span>
-                </div>
-              </div>
-            </div>
-          }
+          <div class="sign-display">
+            <p>No poses found for {{ inputText.toLowerCase() }}/{{ inputText.toLowerCase() }}</p>
+          </div>
         }
-      </div>
-      
-      <!-- Additional info -->
-      <div class="translation-meta">
-        <div class="meta-item">
-          <span class="meta-label">Translation Time:</span>
-          <!-- Use the new translationTime property from the component -->
-          <span class="meta-value">{{ translationTime }}</span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Source:</span>
-          <span class="meta-value">{{ getLanguageDisplayName(fromLanguage) }}</span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Target:</span>
-          <span class="meta-value">{{ getLanguageDisplayName(toLanguage) }}</span>
-        </div>
-      </div>
+      }
     </div>
   }
   
   <!-- Empty state when no parameters provided -->
   @else {
     <div class="empty-state">
-      <div class="empty-icon">📝</div>
-      <h3>No Translation Request</h3>
-      <p>Please provide text to translate via URL parameters.</p>
-      <div class="example-usage">
-        <p><strong>Example usage:</strong></p>
-        <code>/output?text=Hello&from=en&to=asl</code>
-      </div>
-      <div class="supported-params">
-        <h4>Supported Parameters:</h4>
-        <ul>
-          <li><code>text</code> - Text to translate (required)</li>
-          <li><code>from</code> - Source language (default: en)</li>
-          <li><code>to</code> - Target sign language (default: asl)</li>
-        </ul>
-      </div>
+      <p>No translation request found. Please provide text via URL parameters.</p>
     </div>
   }
 </div>
+
