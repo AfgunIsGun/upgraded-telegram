@@ -46,6 +46,7 @@ export class OutputOnlyComponent implements OnInit {
   isLoading: boolean = false;
   hasError: boolean = false;
   errorMessage: string = '';
+  translationTime: string = '';
 
   constructor() { }
 
