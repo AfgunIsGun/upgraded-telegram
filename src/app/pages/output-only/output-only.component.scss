@@ -1,14 +1,174 @@
 .output-only-container {
   width: 100%;
-  height: 100%;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: black;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.translation-result {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  max-width: 800px;
+  width: 100%;
+}
+
+.result-header {
+  text-align: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 20px;
+}
+
+.result-header h2 {
+  color: #333;
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.language-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  font-size: 1.1rem;
+  color: #666;
+}
+
+.from-lang, .to-lang {
+  background: #667eea;
+  color: white;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.arrow {
+  font-size: 1.5rem;
+  color: #667eea;
+}
+
+.original-text, .translated-content {
+  margin-bottom: 25px;
+}
+
+.original-text h3, .translated-content h3 {
+  color: #333;
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+  border-left: 4px solid #667eea;
+  padding-left: 15px;
+}
+
+.original-text p {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #333;
+}
+
+.sign-display {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  min-height: 200px;
+  border: 2px dashed #ddd;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #666;
+  text-align: center;
+}
+
+.loading-state, .error-state, .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 40px;
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e9ecef;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-state p, .error-state p, .empty-state p {
+  font-size: 1.2rem;
+  color: #666;
+  margin: 0;
+}
+
+.error-state h3, .empty-state h3 {
+  color: #dc3545;
+  margin-bottom: 15px;
+}
+
+.retry-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: #5a6fd8;
 }
 
 video {
   object-fit: contain;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .output-only-container {
+    padding: 10px;
+  }
+  
+  .translation-result {
+    padding: 20px;
+  }
+  
+  .result-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .language-info {
+    flex-direction: column;
+    gap: 10px;
+  }
 }
 
 

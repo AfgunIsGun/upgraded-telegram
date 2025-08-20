@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
 import { Observable } from 'rxjs';
 import { Store } from '@ngxs/store';
 import { TranslateState } from '../../modules/translate/translate.state';
@@ -24,21 +25,62 @@ import { AvatarPoseViewerComponent } from '../translate/pose-viewers/avatar-pose
 export class OutputOnlyComponent implements OnInit {
   private store = inject(Store);
   private sanitizer = inject(DomSanitizer);
+  private route = inject(ActivatedRoute);
 
   videoUrl: string | undefined;
   safeVideoUrl: SafeUrl | undefined;
   pose$: Observable<string> | undefined;
   poseViewerSetting$: Observable<PoseViewerSetting> | undefined;
+  
+  // New properties for handling query parameters
+  inputText: string = '';
+  fromLanguage: string = '';
+  toLanguage: string = '';
+  isLoading: boolean = false;
+  hasError: boolean = false;
+  errorMessage: string = '';
 
   constructor() { }
 
   ngOnInit(): void {
+    // Handle query parameters
+    this.route.queryParams.subscribe(params => {
+      this.inputText = params['text'] || '';
+      this.fromLanguage = params['from'] || 'en';
+      this.toLanguage = params['to'] || 'asl';
+      
+      if (this.inputText) {
+        this.processTranslation();
+      }
+    });
+
+    // Keep existing store subscriptions for backward compatibility
     this.pose$ = this.store.select(TranslateState.signedLanguagePose);
     this.poseViewerSetting$ = this.store.select(state => state.settings.poseViewer);
     this.store.select(TranslateState.signedLanguageVideo).subscribe(url => {
       this.videoUrl = url;
       this.safeVideoUrl = url ? this.sanitizer.bypassSecurityTrustUrl(url) : undefined;
     });
+  }
+
+  private async processTranslation(): Promise<void> {
+    this.isLoading = true;
+    this.hasError = false;
+    
+    try {
+      // Simulate translation processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // For now, just show a placeholder message
+      // In a real implementation, you would call your translation service here
+      console.log(`Translating "${this.inputText}" from ${this.fromLanguage} to ${this.toLanguage}`);
+      
+      this.isLoading = false;
+    } catch (error) {
+      this.hasError = true;
+      this.errorMessage = 'Translation failed. Please try again.';
+      this.isLoading = false;
+    }
   }
 
   onVideoError(event: Event): void {
@@ -49,6 +91,12 @@ export class OutputOnlyComponent implements OnInit {
     const videoElement = event.target as HTMLVideoElement;
     if (videoElement.paused) {
       videoElement.play();
+    }
+  }
+
+  retry(): void {
+    if (this.inputText) {
+      this.processTranslation();
     }
   }
 }
