@@ -1,20 +1,6 @@
 <div class="output-only-container">
-  <!-- Loading state -->
-  @if (isLoading) {
-    <div class="loading-state">
-      <p>Translating "{{ inputText }}" to {{ getLanguageDisplayName(toLanguage) }}...</p>
-    </div>
-  }
-  
-  <!-- Error state -->
-  @else if (hasError) {
-    <div class="error-state">
-      <p>{{ errorMessage }}</p>
-    </div>
-  }
-  
   <!-- Translation result with query parameters -->
-  @else if (inputText) {
+  @if (inputText) {
     <div class="translation-result">
       <!-- Video display if available -->
       @if (videoUrl) {

@@ -43,10 +43,6 @@ export class OutputOnlyComponent implements OnInit {
   inputText: string = '';
   fromLanguage: string = '';
   toLanguage: string = '';
-  isLoading: boolean = false;
-  hasError: boolean = false;
-  errorMessage: string = '';
-  translationTime: string = '';
 
   constructor() { }
 
@@ -72,9 +68,6 @@ export class OutputOnlyComponent implements OnInit {
   }
 
   private async processTranslation(): Promise<void> {
-    this.isLoading = true;
-    this.hasError = false;
-    
     try {
       // Dispatch actions to update the store with translation parameters
       this.store.dispatch(new SetSpokenLanguageText(this.inputText));
@@ -84,23 +77,13 @@ export class OutputOnlyComponent implements OnInit {
       // Trigger the translation process
       this.store.dispatch(new ChangeTranslation());
       
-      // Set loading to false after a short delay to allow the translation to process
-      setTimeout(() => {
-        this.isLoading = false;
-      }, 2000);
-      
     } catch (error) {
       console.error('Translation error:', error);
-      this.hasError = true;
-      this.errorMessage = 'Translation failed. Please try again.';
-      this.isLoading = false;
     }
   }
 
   onVideoError(event: Event): void {
     console.error('Video error:', event);
-    this.hasError = true;
-    this.errorMessage = 'Failed to load video. Please try again.';
   }
 
   playVideoIfPaused(event: Event): void {
