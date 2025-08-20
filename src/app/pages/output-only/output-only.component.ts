@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { Store } from '@ngxs/store';
 import { TranslateState } from '../../modules/translate/translate.state';
 import { PoseViewerSetting } from '../../modules/settings/settings.state';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, TitleCasePipe } from '@angular/common';
 import { SkeletonPoseViewerComponent } from '../translate/pose-viewers/skeleton-pose-viewer/skeleton-pose-viewer.component';
 import { HumanPoseViewerComponent } from '../translate/pose-viewers/human-pose-viewer/human-pose-viewer.component';
 import { AvatarPoseViewerComponent } from '../translate/pose-viewers/avatar-pose-viewer/avatar-pose-viewer.component';
@@ -24,6 +24,7 @@ import { SetSetting } from '../../modules/settings/settings.actions';
   standalone: true,
   imports: [
     AsyncPipe,
+    TitleCasePipe,
     SkeletonPoseViewerComponent,
     HumanPoseViewerComponent,
     AvatarPoseViewerComponent
@@ -60,7 +61,7 @@ export class OutputOnlyComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       this.inputText = params['text'] || '';
       this.fromLanguage = params['from'] || 'en';
-      this.toLanguage = params['to'] || 'ase'; 
+      this.toLanguage = params['to'] || 'ase'; // Convert 'asl' to 'ase' (American Sign Language)
       
       // Convert common language codes to the format expected by the backend
       if (this.toLanguage === 'asl') {
