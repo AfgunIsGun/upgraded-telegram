@@ -1,5 +1,52 @@
 <div class="output-only-container">
-  @if (videoUrl) {
+  <!-- Loading state -->
+  @if (isLoading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Translating "{{ inputText }}" to {{ toLanguage.toUpperCase() }}...</p>
+    </div>
+  }
+  
+  <!-- Error state -->
+  @else if (hasError) {
+    <div class="error-state">
+      <h3>Translation Error</h3>
+      <p>{{ errorMessage }}</p>
+      <button (click)="retry()" class="retry-btn">Try Again</button>
+    </div>
+  }
+  
+  <!-- Query parameter input display -->
+  @else if (inputText && !videoUrl && !(pose$ | async)) {
+    <div class="translation-result">
+      <div class="result-header">
+        <h2>Translation Result</h2>
+        <div class="language-info">
+          <span class="from-lang">{{ fromLanguage | titlecase }}</span>
+          <span class="arrow">→</span>
+          <span class="to-lang">{{ toLanguage | titlecase }}</span>
+        </div>
+      </div>
+      
+      <div class="original-text">
+        <h3>Original Text:</h3>
+        <p>{{ inputText }}</p>
+      </div>
+      
+      <div class="translated-content">
+        <h3>Sign Language Translation:</h3>
+        <div class="sign-display">
+          <p>🤟 Sign language representation for: "<strong>{{ inputText }}</strong>"</p>
+          <p style="margin-top: 15px; color: #666;">
+            This would display the actual sign language animation or sequence for {{ toLanguage.toUpperCase() }}.
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+  
+  <!-- Existing video/pose display -->
+  @else if (videoUrl) {
     <video
       [src]="safeVideoUrl"
       autoplay
@@ -21,6 +68,13 @@
           <app-avatar-pose-viewer [src]="pose" />
         }
       }
+    } @else {
+      <!-- Empty state when no parameters provided -->
+      <div class="empty-state">
+        <h3>No Translation Request</h3>
+        <p>Please provide text to translate via URL parameters.</p>
+        <p><small>Example: /output?text=Hello&from=en&to=asl</small></p>
+      </div>
     }
   }
 </div>
