@@ -1,55 +1,36 @@
 <div class="output-only-container">
-  <!-- Translation result with query parameters -->
   @if (inputText) {
-    <div class="translation-result">
-      <!-- Video display if available -->
-      @if (videoUrl) {
-        <div class="video-container">
-          <video
-            [src]="safeVideoUrl"
-            autoplay
-            loop
-            muted
-            playsinline
-            (error)="onVideoError($event)"
-            (click)="playVideoIfPaused($event)">
-            Your browser does not support the video tag.
-          </video>
-        </div>
+    @if (videoUrl) {
+      <video
+        [src]="safeVideoUrl"
+        autoplay
+        loop
+        muted
+        playsinline
+        (error)="onVideoError($event)"
+        (click)="playVideoIfPaused($event)">
+        Your browser does not support the video tag.
+      </video>
+    }
+    @else {
+      @if (pose$ | async; as pose) {
+        @if (poseViewerSetting$ | async; as poseViewerSetting) {
+          @if (poseViewerSetting === 'pose') {
+            <app-skeleton-pose-viewer [src]="pose" />
+          } @else if (poseViewerSetting === 'person') {
+            <app-human-pose-viewer [src]="pose" />
+          } @else if (poseViewerSetting === 'avatar') {
+            <app-avatar-pose-viewer [src]="pose" />
+          }
+        }
       }
-      
-      <!-- If no video, check for pose data -->
       @else {
-        <!-- Use a new @if block to correctly alias the async observable -->
-        @if (pose$ | async; as pose) {
-          <div class="pose-container">
-            @if (poseViewerSetting$ | async; as poseViewerSetting) {
-              @if (poseViewerSetting === 'pose') {
-                <app-skeleton-pose-viewer [src]="pose" />
-              } @else if (poseViewerSetting === 'person') {
-                <app-human-pose-viewer [src]="pose" />
-              } @else if (poseViewerSetting === 'avatar') {
-                <app-avatar-pose-viewer [src]="pose" />
-              }
-            }
-          </div>
-        }
-        
-        <!-- Fallback display if no video and no pose -->
-        @else {
-          <div class="sign-display">
-            <p>No poses found for {{ inputText.toLowerCase() }}/{{ inputText.toLowerCase() }}</p>
-          </div>
-        }
+        <p>No poses found for {{ inputText.toLowerCase() }}/{{ inputText.toLowerCase() }}</p>
       }
-    </div>
+    }
   }
-  
-  <!-- Empty state when no parameters provided -->
   @else {
-    <div class="empty-state">
-      <p>No translation request found. Please provide text via URL parameters.</p>
-    </div>
+    <p>No translation request found. Please provide text via URL parameters.</p>
   }
 </div>
 
