@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { Store } from '@ngxs/store';
 import { TranslateState } from '../../modules/translate/translate.state';
 import { PoseViewerSetting } from '../../modules/settings/settings.state';
-import { AsyncPipe, TitleCasePipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { SkeletonPoseViewerComponent } from '../translate/pose-viewers/skeleton-pose-viewer/skeleton-pose-viewer.component';
 import { HumanPoseViewerComponent } from '../translate/pose-viewers/human-pose-viewer/human-pose-viewer.component';
 import { AvatarPoseViewerComponent } from '../translate/pose-viewers/avatar-pose-viewer/avatar-pose-viewer.component';
@@ -24,7 +24,6 @@ import { SetSetting } from '../../modules/settings/settings.actions';
   standalone: true,
   imports: [
     AsyncPipe,
-    TitleCasePipe,
     SkeletonPoseViewerComponent,
     HumanPoseViewerComponent,
     AvatarPoseViewerComponent
@@ -32,7 +31,7 @@ import { SetSetting } from '../../modules/settings/settings.actions';
 })
 export class OutputOnlyComponent implements OnInit {
   private store = inject(Store);
-  private sanitizer = inject(DomSanSanitizer);
+  private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
 
   videoUrl: string | undefined;
