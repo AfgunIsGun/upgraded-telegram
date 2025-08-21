@@ -17,7 +17,7 @@
           </video>
         </div>
       }
-      
+
       <!-- If no video, check for pose data -->
       @else {
         <!-- Use a new @if block to correctly alias the async observable -->
@@ -34,19 +34,17 @@
             }
           </div>
         }
-        
+
         <!-- Fallback display if no video and no pose -->
         @else {
           <div class="sign-display">
-            <div class="loading-message">
-              <p>Generating sign language translation for "{{ inputText }}"...</p>
-            </div>
+            <p>No poses found for {{ inputText.toLowerCase() }}/{{ inputText.toLowerCase() }}</p>
           </div>
         }
       }
     </div>
   }
-  
+
   <!-- Empty state when no parameters provided -->
   @else {
     <div class="empty-state">
@@ -54,4 +52,3 @@
     </div>
   }
 </div>
-
