@@ -89,7 +89,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
         this.tabBar.style.display = 'none';
       }
 
-      this.cookieConsentElement = document.querySelector('.cc-modal');
+      this.cookieConsentElement = document.querySelector('.cc-modal, .cc-window, .cc-banner, div[data-cc="banner"], div[data-cc="modal"]');
       if (this.cookieConsentElement) {
         this.cookieConsentElement.style.display = 'none';
       }
