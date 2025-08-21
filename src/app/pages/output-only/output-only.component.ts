@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, AfterViewInit, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, AfterViewInit, PLATFORM_ID, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { PoseViewerSetting } from '../../modules/settings/settings.state';
@@ -16,7 +16,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { fromEvent, Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
-type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating';
+type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating' | 'preview';
 
 @Component({
   selector: 'app-output-only',
@@ -39,6 +39,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   private poseEndedSubscription: Subscription;
 
   @ViewChild(SkeletonPoseViewerComponent) poseViewer: SkeletonPoseViewerComponent;
+  @ViewChild('videoPlayer') videoPlayer: ElementRef<HTMLVideoElement>;
 
   // State as signals
   status = signal<Status>('idle');
@@ -51,12 +52,20 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Data from store
   pose = toSignal(this.store.select(state => state.translate.signedLanguagePose));
+  videoUrl = toSignal(this.store.select(state => state.translate.signedLanguageVideo));
   poseViewerSetting = toSignal(this.store.select(state => state.settings.poseViewer));
 
   constructor() {
     effect(() => {
       const pose = this.pose();
       if (pose && this.status() === 'loading') {
+          this.status.set('preview');
+      }
+    });
+
+    effect(() => {
+      const video = this.videoUrl();
+      if (video && this.status() === 'preview') {
           this.status.set('translating');
       }
     });
@@ -85,7 +94,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     this.store.dispatch([
-      new SetSetting('receiveVideo', false), // Do not generate video
+      new SetSetting('receiveVideo', false), // Initially, we want the pose
       new SetSetting('detectSign', false),
       new SetSetting('drawSignWriting', false),
       new SetSetting('drawPose', true),
@@ -106,16 +115,13 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId) && this.poseViewer) {
-      // Monkey patch stopRecording to do nothing, to prevent video generation and lag
-      this.poseViewer.stopRecording = () => {};
-
       const pose = this.poseViewer.poseEl().nativeElement;
-      this.poseEndedSubscription = fromEvent(pose, 'ended$')
+      this.poseEndedSubscription = fromEvent(pose, 'ended
+)
         .pipe(
           tap(async () => {
-            setTimeout(async () => {
-              await pose.play();
-            }, 1500);
+            // After the pose animation ends, request the video
+            this.store.dispatch(new SetSetting('receiveVideo', true));
           })
         )
         .subscribe();
@@ -131,6 +137,12 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.poseEndedSubscription) {
       this.poseEndedSubscription.unsubscribe();
     }
+  }
+
+  onVideoEnded() {
+    setTimeout(() => {
+      this.videoPlayer.nativeElement.play();
+    }, 1500);
   }
 
   private async processTranslation(): Promise<void> {
