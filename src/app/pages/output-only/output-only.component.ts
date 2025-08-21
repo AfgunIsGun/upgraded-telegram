@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, AfterViewInit, PLATFORM_ID } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { PoseViewerSetting } from '../../modules/settings/settings.state';
@@ -13,6 +13,8 @@ import {
 } from '../../modules/translate/translate.actions';
 import { SetSetting } from '../../modules/settings/settings.actions';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { fromEvent, Subscription } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating';
 
@@ -29,13 +31,12 @@ type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating';
     AvatarPoseViewerComponent,
   ],
 })
-export class OutputOnlyComponent implements OnInit, OnDestroy {
+export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   private store = inject(Store);
   private route = inject(ActivatedRoute);
   private platformId = inject(PLATFORM_ID);
   private tabBar: HTMLElement;
-  private cookieConsentElement: HTMLElement;
-  private observer: MutationObserver;
+  private poseEndedSubscription: Subscription;
 
   @ViewChild(SkeletonPoseViewerComponent) poseViewer: SkeletonPoseViewerComponent;
 
@@ -49,19 +50,14 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
   toLanguage = signal('');
 
   // Data from store
-  videoUrl = toSignal(this.store.select(state => state.translate.signedLanguageVideo));
   pose = toSignal(this.store.select(state => state.translate.signedLanguagePose));
   poseViewerSetting = toSignal(this.store.select(state => state.settings.poseViewer));
 
   constructor() {
     effect(() => {
-      const url = this.videoUrl();
-      if (url) {
-        this.status.set('translating');
-      } else if (this.status() === 'translating' && !url) {
-        // Remains in translating state, showing pose viewer
-      } else if (this.status() !== 'error') {
-        this.status.set('idle');
+      const pose = this.pose();
+      if (pose && this.status() === 'loading') {
+          this.status.set('translating');
       }
     });
 
@@ -70,13 +66,6 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
       if (text && this.status() === 'idle') {
         this.processTranslation();
       }
-    });
-    
-    effect(() => {
-        const pose = this.pose();
-        if (pose && this.status() === 'loading') {
-            this.status.set('translating');
-        }
     });
   }
 
@@ -87,27 +76,16 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
         this.tabBar.style.display = 'none';
       }
 
-      this.observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === 1 && (node as HTMLElement).classList.contains('cm')) {
-              (node as HTMLElement).style.display = 'none';
-            }
-          });
-        });
-      });
-
-      this.observer.observe(document.body, { childList: true, subtree: true });
-
-      // Also try to hide it immediately
-      this.cookieConsentElement = document.querySelector('.cm');
-      if (this.cookieConsentElement) {
-        this.cookieConsentElement.style.display = 'none';
-      }
+      setTimeout(() => {
+        const acceptAllButton = document.querySelector('button[data-role="all"]');
+        if (acceptAllButton) {
+          (acceptAllButton as HTMLElement).click();
+        }
+      }, 1000);
     }
 
     this.store.dispatch([
-      new SetSetting('receiveVideo', true),
+      new SetSetting('receiveVideo', false), // Do not generate video
       new SetSetting('detectSign', false),
       new SetSetting('drawSignWriting', false),
       new SetSetting('drawPose', true),
@@ -126,18 +104,29 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    if (this.observer) {
-      this.observer.disconnect();
+  ngAfterViewInit(): void {
+    if (isPlatformBrowser(this.platformId) && this.poseViewer) {
+      const pose = this.poseViewer.poseEl().nativeElement;
+      this.poseEndedSubscription = fromEvent(pose, 'ended$')
+        .pipe(
+          tap(async () => {
+            setTimeout(async () => {
+              await pose.play();
+            }, 1500);
+          })
+        )
+        .subscribe();
     }
+  }
+
+  ngOnDestroy(): void {
     if (isPlatformBrowser(this.platformId)) {
       if (this.tabBar) {
         this.tabBar.style.display = 'flex'; // Or its original display value
       }
-
-      if (this.cookieConsentElement) {
-        this.cookieConsentElement.style.display = 'block';
-      }
+    }
+    if (this.poseEndedSubscription) {
+      this.poseEndedSubscription.unsubscribe();
     }
   }
 
