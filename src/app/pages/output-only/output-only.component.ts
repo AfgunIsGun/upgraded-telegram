@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, AfterViewInit, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, PLATFORM_ID } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { PoseViewerSetting } from '../../modules/settings/settings.state';
@@ -35,6 +35,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private tabBar: HTMLElement;
   private cookieConsentElement: HTMLElement;
+  private observer: MutationObserver;
 
   @ViewChild(SkeletonPoseViewerComponent) poseViewer: SkeletonPoseViewerComponent;
 
@@ -86,12 +87,23 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
         this.tabBar.style.display = 'none';
       }
 
-      setTimeout(() => {
-        this.cookieConsentElement = document.querySelector('.cm');
-        if (this.cookieConsentElement) {
-          this.cookieConsentElement.style.display = 'none';
-        }
-      }, 500);
+      this.observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1 && (node as HTMLElement).classList.contains('cm')) {
+              (node as HTMLElement).style.display = 'none';
+            }
+          });
+        });
+      });
+
+      this.observer.observe(document.body, { childList: true, subtree: true });
+
+      // Also try to hide it immediately
+      this.cookieConsentElement = document.querySelector('.cm');
+      if (this.cookieConsentElement) {
+        this.cookieConsentElement.style.display = 'none';
+      }
     }
 
     this.store.dispatch([
@@ -115,6 +127,9 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.observer) {
+      this.observer.disconnect();
+    }
     if (isPlatformBrowser(this.platformId)) {
       if (this.tabBar) {
         this.tabBar.style.display = 'flex'; // Or its original display value
