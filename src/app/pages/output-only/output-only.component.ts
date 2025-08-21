@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, effect, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, ElementRef } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngxs/store';
@@ -31,10 +31,11 @@ type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating';
     AvatarPoseViewerComponent,
   ],
 })
-export class OutputOnlyComponent implements OnInit {
+export class OutputOnlyComponent implements OnInit, OnDestroy {
   private store = inject(Store);
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
+  private tabBar: HTMLElement;
 
   @ViewChild('videoPlayer') videoPlayer: ElementRef<HTMLVideoElement>;
 
@@ -82,6 +83,11 @@ export class OutputOnlyComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.tabBar = document.querySelector('ion-tab-bar');
+    if (this.tabBar) {
+      this.tabBar.style.display = 'none';
+    }
+
     this.store.dispatch([
       new SetSetting('receiveVideo', true),
       new SetSetting('detectSign', false),
@@ -100,6 +106,12 @@ export class OutputOnlyComponent implements OnInit {
       if (toLang === 'gsl') toLang = 'gsg';
       this.toLanguage.set(toLang);
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.tabBar) {
+      this.tabBar.style.display = 'flex'; // Or its original display value
+    }
   }
 
   private async processTranslation(): Promise<void> {

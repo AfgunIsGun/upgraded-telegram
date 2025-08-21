@@ -1,17 +1,25 @@
 <ion-tabs>
-  <ion-router-outlet />
+  <ion-tab-bar slot="bottom">
+    <ion-tab-button tab="translate">
+      <ion-icon aria-hidden="true" name="home" />
+      <ion-label>Home</ion-label>
+    </ion-tab-button>
 
-  @if (!hideTabBar()) {
-    <ion-tab-bar slot="bottom">
-      <ion-tab-button tab="translate" href="/">
-        <ion-icon aria-hidden="true" name="home" />
-        <ion-label>{{ 'tabs.translate' | transloco }}</ion-label>
-      </ion-tab-button>
+    <!--    &lt;!&ndash;-->
+    <!--    <ion-tab-button tab="converse" [disabled]="true">-->
+    <!--      <ion-icon aria-hidden="true" name="chatbubbles" />-->
+    <!--      <ion-label>Converse</ion-label>-->
+    <!--    </ion-tab-button>-->
 
-      <ion-tab-button tab="settings" href="/settings">
-        <ion-icon aria-hidden="true" name="settings" />
-        <ion-label>{{ 'tabs.settings' | transloco }}</ion-label>
-      </ion-tab-button>
-    </ion-tab-bar>
-  }
+    <!--    <ion-tab-button tab="avatar" [disabled]="true">-->
+    <!--      <ion-icon aria-hidden="true" name="sparkles" />-->
+    <!--      <ion-label>Avatar</ion-label>-->
+    <!--    </ion-tab-button>-->
+    <!--    &ndash;&gt;-->
+
+    <ion-tab-button tab="settings">
+      <ion-icon aria-hidden="true" name="person" />
+      <ion-label>Settings</ion-label>
+    </ion-tab-button>
+  </ion-tab-bar>
 </ion-tabs>
