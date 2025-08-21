@@ -116,8 +116,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId) && this.poseViewer) {
       const pose = this.poseViewer.poseEl().nativeElement;
-      this.poseEndedSubscription = fromEvent(pose, 'ended
-)
+      this.poseEndedSubscription = fromEvent(pose, 'ended$')
         .pipe(
           tap(async () => {
             // After the pose animation ends, request the video
