@@ -5,39 +5,37 @@
         <p>Loading translation for "{{ inputText() }}"...</p>
       </div>
     }
+    @case ('preview') {
+      @if (pose(); as poseSrc) {
+        <div class="pose-container">
+          @switch (poseViewerSetting()) {
+            @case ('pose') { <app-skeleton-pose-viewer [src]="poseSrc" /> }
+            @case ('person') { <app-human-pose-viewer [src]="poseSrc" /> }
+            @case ('avatar') { <app-avatar-pose-viewer [src]="poseSrc" /> }
+          }
+        </div>
+      } @else {
+        <div class="loading-container">
+          <p>Generating preview for "{{ inputText() }}"...</p>
+        </div>
+      }
+    }
     @case ('translating') {
-        @if (pose(); as poseSrc) {
-          <div class="pose-container">
-            @switch (poseViewerSetting()) {
-              @case ('pose') { <app-skeleton-pose-viewer [src]="poseSrc" /> }
-              @case ('person') { <app-human-pose-viewer [src]="poseSrc" /> }
-              @case ('avatar') { <app-avatar-pose-viewer [src]="poseSrc" /> }
-            }
-          </div>
-        } @else {
-            <div class="loading-container">
-                <p>Generating preview for "{{ inputText() }}"...</p>
-            </div>
-        }
+      @if (videoUrl(); as video) {
+        <div class="video-container">
+          <video #videoPlayer [src]="video" autoplay playsinline (ended)="onVideoEnded()"></video>
+        </div>
+      } @else {
+        <div class="loading-container">
+          <p>Generating video for "{{ inputText() }}"...</p>
+        </div>
+      }
     }
     @case ('error') {
       <div class="error-container">
         <p>{{ error() }}</p>
         <button (click)="retry()">Retry</button>
       </div>
-    }
-    @case ('success') {
-      @if (safeVideoUrl(); as url) {
-        <div class="video-container">
-          <video #videoPlayer (loadeddata)="onVideoLoaded()" [src]="url" autoplay loop muted playsinline>
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      } @else {
-        <div class="no-video-container">
-          <p>Translation successful, but no video available.</p>
-        </div>
-      }
     }
     @case ('idle') {
       <div class="idle-container">
