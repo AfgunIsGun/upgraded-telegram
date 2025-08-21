@@ -5,6 +5,21 @@
         <p>Loading translation for "{{ inputText() }}"...</p>
       </div>
     }
+    @case ('translating') {
+        @if (pose(); as poseSrc) {
+          <div class="pose-container">
+            @switch (poseViewerSetting()) {
+              @case ('pose') { <app-skeleton-pose-viewer [src]="poseSrc" /> }
+              @case ('person') { <app-human-pose-viewer [src]="poseSrc" /> }
+              @case ('avatar') { <app-avatar-pose-viewer [src]="poseSrc" /> }
+            }
+          </div>
+        } @else {
+            <div class="loading-container">
+                <p>Generating preview for "{{ inputText() }}"...</p>
+            </div>
+        }
+    }
     @case ('error') {
       <div class="error-container">
         <p>{{ error() }}</p>

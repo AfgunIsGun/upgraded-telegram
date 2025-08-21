@@ -16,7 +16,7 @@ import {
 import { SetSetting } from '../../modules/settings/settings.actions';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-type Status = 'loading' | 'error' | 'success' | 'idle';
+type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating';
 
 @Component({
   selector: 'app-output-only',
@@ -57,14 +57,25 @@ export class OutputOnlyComponent implements OnInit {
       if (url) {
         this.safeVideoUrl.set(this.sanitizer.bypassSecurityTrustUrl(url as string));
         this.status.set('success');
+      } else if (this.status() === 'translating' && !url) {
+        // Remains in translating state, showing pose viewer
+      } else if (this.status() !== 'error') {
+        this.status.set('idle');
       }
     });
 
     effect(() => {
       const text = this.inputText();
-      if (text) {
+      if (text && this.status() === 'idle') {
         this.processTranslation();
       }
+    });
+    
+    effect(() => {
+        const pose = this.pose();
+        if (pose && this.status() === 'loading') {
+            this.status.set('translating');
+        }
     });
   }
 
@@ -78,6 +89,7 @@ export class OutputOnlyComponent implements OnInit {
     ]);
 
     this.route.queryParams.subscribe(params => {
+      this.status.set('idle'); // Reset status on new params
       this.inputText.set(params['text'] || '');
       this.fromLanguage.set(params['from'] || 'en');
       
