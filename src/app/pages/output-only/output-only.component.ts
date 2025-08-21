@@ -81,7 +81,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
         if (acceptAllButton) {
           (acceptAllButton as HTMLElement).click();
         }
-      }, 1000);
+      }, 2000); // Increased timeout
     }
 
     this.store.dispatch([
@@ -106,6 +106,9 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId) && this.poseViewer) {
+      // Monkey patch stopRecording to do nothing, to prevent video generation and lag
+      this.poseViewer.stopRecording = () => {};
+
       const pose = this.poseViewer.poseEl().nativeElement;
       this.poseEndedSubscription = fromEvent(pose, 'ended$')
         .pipe(
