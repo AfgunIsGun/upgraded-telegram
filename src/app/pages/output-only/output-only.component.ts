@@ -1,8 +1,6 @@
-import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, ElementRef } from '@angular/core';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { TranslateState } from '../../modules/translate/translate.state';
 import { PoseViewerSetting } from '../../modules/settings/settings.state';
 import { AsyncPipe, TitleCasePipe } from '@angular/common';
 import { SkeletonPoseViewerComponent } from '../translate/pose-viewers/skeleton-pose-viewer/skeleton-pose-viewer.component';
@@ -15,6 +13,8 @@ import {
 } from '../../modules/translate/translate.actions';
 import { SetSetting } from '../../modules/settings/settings.actions';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { fromEvent } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating';
 
@@ -31,13 +31,12 @@ type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating';
     AvatarPoseViewerComponent,
   ],
 })
-export class OutputOnlyComponent implements OnInit, OnDestroy {
+export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   private store = inject(Store);
-  private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
   private tabBar: HTMLElement;
 
-  @ViewChild('videoPlayer') videoPlayer: ElementRef<HTMLVideoElement>;
+  @ViewChild(SkeletonPoseViewerComponent) poseViewer: SkeletonPoseViewerComponent;
 
   // State as signals
   status = signal<Status>('idle');
@@ -50,7 +49,6 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
 
   // Data from store
   videoUrl = toSignal(this.store.select(state => state.translate.signedLanguageVideo));
-  safeVideoUrl = signal<SafeUrl | undefined>(undefined);
   pose = toSignal(this.store.select(state => state.translate.signedLanguagePose));
   poseViewerSetting = toSignal(this.store.select(state => state.settings.poseViewer));
 
@@ -58,8 +56,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
     effect(() => {
       const url = this.videoUrl();
       if (url) {
-        this.safeVideoUrl.set(this.sanitizer.bypassSecurityTrustUrl(url as string));
-        this.status.set('success');
+        this.status.set('translating');
       } else if (this.status() === 'translating' && !url) {
         // Remains in translating state, showing pose viewer
       } else if (this.status() !== 'error') {
@@ -108,6 +105,21 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
     });
   }
 
+  ngAfterViewInit(): void {
+    if (this.poseViewer) {
+      const pose = this.poseViewer.poseEl().nativeElement;
+      fromEvent(pose, 'ended$')
+        .pipe(
+          tap(async () => {
+            setTimeout(async () => {
+              await pose.play();
+            }, 1500);
+          })
+        )
+        .subscribe();
+    }
+  }
+
   ngOnDestroy(): void {
     if (this.tabBar) {
       this.tabBar.style.display = 'flex'; // Or its original display value
@@ -125,12 +137,6 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
       console.error('Translation error:', e);
       this.error.set('Translation failed. Please try again.');
       this.status.set('error');
-    }
-  }
-
-  onVideoLoaded(): void {
-    if (this.videoPlayer) {
-      this.videoPlayer.nativeElement.playbackRate = 0.25;
     }
   }
 

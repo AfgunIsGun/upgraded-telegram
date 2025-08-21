@@ -26,19 +26,6 @@
         <button (click)="retry()">Retry</button>
       </div>
     }
-    @case ('success') {
-      @if (safeVideoUrl(); as url) {
-        <div class="video-container">
-          <video #videoPlayer (loadeddata)="onVideoLoaded()" [src]="url" autoplay loop muted playsinline>
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      } @else {
-        <div class="no-video-container">
-          <p>Translation successful, but no video available.</p>
-        </div>
-      }
-    }
     @case ('idle') {
       <div class="idle-container">
         <p>Waiting for translation request...</p>
