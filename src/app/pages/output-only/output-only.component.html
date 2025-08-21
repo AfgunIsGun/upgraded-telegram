@@ -10,18 +10,20 @@
           <div class="video-container">
             <video [src]="video" autoplay loop playsinline></video>
           </div>
-        } @else if (pose(); as poseSrc) {
-          <div class="pose-container">
-            @switch (poseViewerSetting()) {
-              @case ('pose') { <app-skeleton-pose-viewer [src]="poseSrc" /> }
-              @case ('person') { <app-human-pose-viewer [src]="poseSrc" /> }
-              @case ('avatar') { <app-avatar-pose-viewer [src]="poseSrc" /> }
-            }
-          </div>
         } @else {
-            <div class="loading-container">
-                <p>Generating preview for "{{ inputText() }}"...</p>
+          @if (pose(); as poseSrc) {
+            <div class="pose-container">
+              @switch (poseViewerSetting()) {
+                @case ('pose') { <app-skeleton-pose-viewer [src]="poseSrc" /> }
+                @case ('person') { <app-human-pose-viewer [src]="poseSrc" /> }
+                @case ('avatar') { <app-avatar-pose-viewer [src]="poseSrc" /> }
+              }
             </div>
+          } @else {
+              <div class="loading-container">
+                  <p>Generating preview for "{{ inputText() }}"...</p>
+              </div>
+          }
         }
     }
     @case ('error') {
