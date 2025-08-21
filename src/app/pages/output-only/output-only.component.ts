@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, effect, ViewChild, ElementRef } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngxs/store';
@@ -35,6 +35,8 @@ export class OutputOnlyComponent implements OnInit {
   private store = inject(Store);
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
+
+  @ViewChild('videoPlayer') videoPlayer: ElementRef<HTMLVideoElement>;
 
   // State as signals
   status = signal<Status>('idle');
@@ -111,6 +113,12 @@ export class OutputOnlyComponent implements OnInit {
       console.error('Translation error:', e);
       this.error.set('Translation failed. Please try again.');
       this.status.set('error');
+    }
+  }
+
+  onVideoLoaded(): void {
+    if (this.videoPlayer) {
+      this.videoPlayer.nativeElement.playbackRate = 0.75;
     }
   }
 
