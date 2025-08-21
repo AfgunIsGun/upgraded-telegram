@@ -41,7 +41,7 @@ export class AppComponent implements AfterViewInit {
       this.meta.updateTag({
         name: 'viewport',
         content:
-          'minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, initial-scale=1.0, viewport-fit=cover, width=device-width',
+        'minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, initial-scale=1.0, viewport-fit=cover, width=device-width',
       });
 
       const {SplashScreen} = await import(
@@ -85,6 +85,11 @@ export class AppComponent implements AfterViewInit {
   }
 
   initCookieConsent() {
+    // Check if we're in browser environment
+    if (typeof window === 'undefined' || typeof location === 'undefined') {
+      return Promise.resolve();
+    }
+
     return CookieConsent.run({
       root: 'body',
       autoShow: true,
@@ -121,8 +126,8 @@ export class AppComponent implements AfterViewInit {
         };
         for (const [category, types] of Object.entries(categories)) {
           const consent: ConsentStatus = cookie.categories.includes(category)
-            ? ConsentStatus.Granted
-            : ConsentStatus.Denied;
+          ? ConsentStatus.Granted
+          : ConsentStatus.Denied;
           for (const type of types) {
             FirebaseAnalytics.setConsent({type, status: consent});
           }
@@ -159,9 +164,9 @@ export class AppComponent implements AfterViewInit {
 
       language: {
         default: 'en',
-        translations: {
-          en: 'assets/i18n/cookies/en.json',
-        },
+          translations: {
+            en: 'assets/i18n/cookies/en.json',
+          },
       },
     });
   }
@@ -172,14 +177,14 @@ export class AppComponent implements AfterViewInit {
     );
 
     this.router.events
-      .pipe(
-        filter(event => event instanceof NavigationEnd),
-        tap(async (event: NavigationEnd) => {
-          await isLanguageLoaded; // Before triggering page view, wait for language to be loaded
-          await this.ga.setCurrentScreen(event.urlAfterRedirects);
-        })
-      )
-      .subscribe();
+    .pipe(
+      filter(event => event instanceof NavigationEnd),
+          tap(async (event: NavigationEnd) => {
+            await isLanguageLoaded; // Before triggering page view, wait for language to be loaded
+            await this.ga.setCurrentScreen(event.urlAfterRedirects);
+          })
+    )
+    .subscribe();
   }
 
   listenLanguageChange() {
@@ -193,20 +198,20 @@ export class AppComponent implements AfterViewInit {
     }
 
     this.transloco.langChanges$
-      .pipe(
-        tap(lang => {
-          document.documentElement.lang = lang;
-          document.dir = ['he', 'ar', 'fa', 'ku', 'ps', 'sd', 'ug', 'ur', 'yi'].includes(lang) ? 'rtl' : 'ltr';
+    .pipe(
+      tap(lang => {
+        document.documentElement.lang = lang;
+        document.dir = ['he', 'ar', 'fa', 'ku', 'ps', 'sd', 'ug', 'ur', 'yi'].includes(lang) ? 'rtl' : 'ltr';
 
-          // Set pre-rendered cloud function path with lang attribute
-          const openSearch = Array.from(document.head.children).find(t => t.getAttribute('rel') === 'search');
-          if (openSearch) {
-            // not available in the test environment sometimes
-            openSearch.setAttribute('href', `/opensearch.xml?lang=${lang}`);
-          }
-        })
-      )
-      .subscribe();
+        // Set pre-rendered cloud function path with lang attribute
+        const openSearch = Array.from(document.head.children).find(t => t.getAttribute('rel') === 'search');
+        if (openSearch) {
+          // not available in the test environment sometimes
+          openSearch.setAttribute('href', `/opensearch.xml?lang=${lang}`);
+        }
+      })
+    )
+    .subscribe();
 
     this.transloco.setActiveLang(urlParam || languageCodeNormalizer(navigator.language));
   }
@@ -229,3 +234,5 @@ export class AppComponent implements AfterViewInit {
     Keyboard.addListener('keyboardWillHide', () => html.classList.remove(className));
   }
 }
+
+live
