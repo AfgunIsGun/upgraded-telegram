@@ -130,7 +130,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     if (this.videoPlayer) {
-        this.videoPlayer.nativeElement.playbackRate = 0.25;
+        this.videoPlayer.nativeElement.playbackRate = 0.1;
     }
   }
 
@@ -146,9 +146,11 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onVideoEnded() {
-    if (this.videoPlayer && this.videoPlayer.nativeElement) {
-      this.videoPlayer.nativeElement.play();
-    }
+    setTimeout(() => {
+      if (this.videoPlayer && this.videoPlayer.nativeElement) {
+        this.videoPlayer.nativeElement.play();
+      }
+    }, 100);
   }
 
   private async processTranslation(): Promise<void> {
