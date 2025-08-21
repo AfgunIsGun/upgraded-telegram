@@ -118,7 +118,7 @@ export class OutputOnlyComponent implements OnInit {
 
   onVideoLoaded(): void {
     if (this.videoPlayer) {
-      this.videoPlayer.nativeElement.playbackRate = 0.5;
+      this.videoPlayer.nativeElement.playbackRate = 0.25;
     }
   }
 
