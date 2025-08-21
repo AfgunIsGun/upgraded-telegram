@@ -44,7 +44,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   // State as signals
   status = signal<Status>('idle');
   error = signal<string | null>(null);
-  
+
   // Input from query params
   inputText = signal('');
   fromLanguage = signal('');
@@ -69,6 +69,11 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       const video = this.videoUrl();
       if (video && this.status() === 'preview') {
           this.status.set('translating');
+          setTimeout(() => {
+            if (this.videoPlayer) {
+              this.videoPlayer.nativeElement.playbackRate = 0.25;
+            }
+          }, 0);
       }
     });
 
@@ -107,7 +112,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       this.status.set('idle'); // Reset status on new params
       this.inputText.set(params['text'] || '');
       this.fromLanguage.set(params['from'] || 'en');
-      
+
       let toLang = params['to'] || 'ase';
       if (toLang === 'asl') toLang = 'ase';
       if (toLang === 'gsl') toLang = 'gsg';
@@ -116,21 +121,23 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    if (isPlatformBrowser(this.platformId) && this.poseViewer) {
-      const pose = this.poseViewer.poseEl().nativeElement;
-      this.poseEndedSubscription = fromEvent(pose, 'ended$')
-        .pipe(
-          tap(async () => {
-            // After the pose animation ends, request the video
-            // This is now redundant as receiveVideo is set earlier
-            // this.store.dispatch(new SetSetting('receiveVideo', true));
-          })
-        )
-        .subscribe();
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => {
+        if (this.poseViewer) {
+          const pose = this.poseViewer.poseEl().nativeElement;
+          this.poseEndedSubscription = fromEvent(pose, 'ended$')
+            .pipe(
+              tap(async () => {
+                pose.play();
+              })
+            )
+            .subscribe();
+        }
+      }, 0);
     }
 
     if (this.videoPlayer) {
-        this.videoPlayer.nativeElement.playbackRate = 0.1;
+      this.videoPlayer.nativeElement.playbackRate = 0.25;
     }
   }
 
@@ -150,7 +157,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       if (this.videoPlayer && this.videoPlayer.nativeElement) {
         this.videoPlayer.nativeElement.play();
       }
-    }, 100);
+    }, 1500);
   }
 
   private async processTranslation(): Promise<void> {
@@ -170,7 +177,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   retry(): void {
     this.processTranslation();
   }
-  
+
   getLanguageDisplayName(code: string): string {
     const languageMap: { [key: string]: string } = {
       'en': 'English',
