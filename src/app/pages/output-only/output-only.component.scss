@@ -1,82 +1,39 @@
-.output-only-container {
+:host {
+  display: block;
   width: 100%;
-  height: 100vh;
+  height: 100%;
+}
+
+.container {
+  width: 100%;
+  height: 100%;
   display: flex;
-  align-items: center;
   justify-content: center;
-  background: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  align-items: center;
+  font-family: sans-serif;
+}
+
+.video-container, .pose-container {
+  width: 100%;
+  height: 100%;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.loading-container,
+.error-container,
+.idle-container,
+.no-video-container {
+  text-align: center;
   padding: 20px;
-  box-sizing: border-box;
-  overflow-y: auto;
 }
 
-.translation-result {
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.video-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.video-container video {
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-.pose-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sign-display {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.sign-display p {
-  font-size: 1.2rem;
-  color: #333;
-  margin: 0;
-}
-
-.loading-state, .error-state, .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  width: 100%;
-  height: 100%;
-}
-
-.loading-state p, .error-state p, .empty-state p {
-  font-size: 1.2rem;
-  color: #333;
-  margin: 10px 0;
-}
-
-@media (max-width: 768px) {
-  .output-only-container {
-    padding: 10px;
-  }
+.error-container button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
 }

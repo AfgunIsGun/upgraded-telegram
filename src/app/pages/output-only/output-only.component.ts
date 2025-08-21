@@ -1,7 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, ElementRef } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { Observable } from 'rxjs';
 import { Store } from '@ngxs/store';
 import { TranslateState } from '../../modules/translate/translate.state';
 import { PoseViewerSetting } from '../../modules/settings/settings.state';
@@ -13,9 +12,11 @@ import {
   SetSpokenLanguageText,
   SetSpokenLanguage,
   SetSignedLanguage,
-  ChangeTranslation
 } from '../../modules/translate/translate.actions';
 import { SetSetting } from '../../modules/settings/settings.actions';
+import { toSignal } from '@angular/core/rxjs-interop';
+
+type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating';
 
 @Component({
   selector: 'app-output-only',
@@ -27,101 +28,116 @@ import { SetSetting } from '../../modules/settings/settings.actions';
     TitleCasePipe,
     SkeletonPoseViewerComponent,
     HumanPoseViewerComponent,
-    AvatarPoseViewerComponent
-  ]
+    AvatarPoseViewerComponent,
+  ],
 })
-export class OutputOnlyComponent implements OnInit {
+export class OutputOnlyComponent implements OnInit, OnDestroy {
   private store = inject(Store);
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
+  private tabBar: HTMLElement;
 
-  videoUrl: string | undefined;
-  safeVideoUrl: SafeUrl | undefined;
-  pose$: Observable<string> | undefined;
-  poseViewerSetting$: Observable<PoseViewerSetting> | undefined;
+  @ViewChild('videoPlayer') videoPlayer: ElementRef<HTMLVideoElement>;
 
-  // New properties for handling query parameters
-  inputText: string = '';
-  fromLanguage: string = '';
-  toLanguage: string = '';
+  // State as signals
+  status = signal<Status>('idle');
+  error = signal<string | null>(null);
+  
+  // Input from query params
+  inputText = signal('');
+  fromLanguage = signal('');
+  toLanguage = signal('');
 
-  constructor() { }
+  // Data from store
+  videoUrl = toSignal(this.store.select(state => state.translate.signedLanguageVideo));
+  safeVideoUrl = signal<SafeUrl | undefined>(undefined);
+  pose = toSignal(this.store.select(state => state.translate.signedLanguagePose));
+  poseViewerSetting = toSignal(this.store.select(state => state.settings.poseViewer));
+
+  constructor() {
+    effect(() => {
+      const url = this.videoUrl();
+      if (url) {
+        this.safeVideoUrl.set(this.sanitizer.bypassSecurityTrustUrl(url as string));
+        this.status.set('success');
+      } else if (this.status() === 'translating' && !url) {
+        // Remains in translating state, showing pose viewer
+      } else if (this.status() !== 'error') {
+        this.status.set('idle');
+      }
+    });
+
+    effect(() => {
+      const text = this.inputText();
+      if (text && this.status() === 'idle') {
+        this.processTranslation();
+      }
+    });
+    
+    effect(() => {
+        const pose = this.pose();
+        if (pose && this.status() === 'loading') {
+            this.status.set('translating');
+        }
+    });
+  }
 
   ngOnInit(): void {
-    // Initialize default settings like the main translate component
+    this.tabBar = document.querySelector('ion-tab-bar');
+    if (this.tabBar) {
+      this.tabBar.style.display = 'none';
+    }
+
     this.store.dispatch([
       new SetSetting('receiveVideo', true),
-                        new SetSetting('detectSign', false),
-                        new SetSetting('drawSignWriting', false),
-                        new SetSetting('drawPose', true),
-                        new SetSetting('poseViewer', 'pose'),
+      new SetSetting('detectSign', false),
+      new SetSetting('drawSignWriting', false),
+      new SetSetting('drawPose', true),
+      new SetSetting('poseViewer', 'pose'),
     ]);
 
-    // Handle query parameters
     this.route.queryParams.subscribe(params => {
-      this.inputText = params['text'] || '';
-      this.fromLanguage = params['from'] || 'en';
-      this.toLanguage = params['to'] || 'ase'; // Convert 'asl' to 'ase' (American Sign Language)
-
-    // Convert common language codes to the format expected by the backend
-    if (this.toLanguage === 'asl') {
-      this.toLanguage = 'ase';
-    }
-    if (this.toLanguage === 'gsl') {
-      this.toLanguage = 'gsg';
-    }
-    if (this.toLanguage === 'fsl') {
-      this.toLanguage = 'fsl';
-    }
-
-    if (this.inputText) {
-      this.processTranslation();
-    }
+      this.status.set('idle'); // Reset status on new params
+      this.inputText.set(params['text'] || '');
+      this.fromLanguage.set(params['from'] || 'en');
+      
+      let toLang = params['to'] || 'ase';
+      if (toLang === 'asl') toLang = 'ase';
+      if (toLang === 'gsl') toLang = 'gsg';
+      this.toLanguage.set(toLang);
     });
+  }
 
-    // Keep existing store subscriptions for backward compatibility
-    this.pose$ = this.store.select(state => state.translate.signedLanguagePose);
-    this.poseViewerSetting$ = this.store.select(state => state.settings.poseViewer);
-    this.store.select(state => state.translate.signedLanguageVideo).subscribe(url => {
-      this.videoUrl = url as string;
-      this.safeVideoUrl = url ? this.sanitizer.bypassSecurityTrustUrl(url as string) : undefined;
-    });
+  ngOnDestroy(): void {
+    if (this.tabBar) {
+      this.tabBar.style.display = 'flex'; // Or its original display value
+    }
   }
 
   private async processTranslation(): Promise<void> {
+    this.status.set('loading');
+    this.error.set(null);
     try {
-      // First, set the languages
-      await this.store.dispatch(new SetSpokenLanguage(this.fromLanguage)).toPromise();
-      await this.store.dispatch(new SetSignedLanguage(this.toLanguage)).toPromise();
-
-      // Then set the text, which automatically triggers ChangeTranslation
-      await this.store.dispatch(new SetSpokenLanguageText(this.inputText)).toPromise();
-
-    } catch (error) {
-      console.error('Translation error:', error);
+      await this.store.dispatch(new SetSpokenLanguage(this.fromLanguage())).toPromise();
+      await this.store.dispatch(new SetSignedLanguage(this.toLanguage())).toPromise();
+      await this.store.dispatch(new SetSpokenLanguageText(this.inputText())).toPromise();
+    } catch (e) {
+      console.error('Translation error:', e);
+      this.error.set('Translation failed. Please try again.');
+      this.status.set('error');
     }
   }
 
-  onVideoError(event: Event): void {
-    console.error('Video error:', event);
-  }
-
-  playVideoIfPaused(event: Event): void {
-    const videoElement = event.target as HTMLVideoElement;
-    if (videoElement.paused) {
-      videoElement.play().catch(error => {
-        console.error('Failed to play video:', error);
-      });
+  onVideoLoaded(): void {
+    if (this.videoPlayer) {
+      this.videoPlayer.nativeElement.playbackRate = 0.25;
     }
   }
 
   retry(): void {
-    if (this.inputText) {
-      this.processTranslation();
-    }
+    this.processTranslation();
   }
-
-  // Helper method to get language display name
+  
   getLanguageDisplayName(code: string): string {
     const languageMap: { [key: string]: string } = {
       'en': 'English',
