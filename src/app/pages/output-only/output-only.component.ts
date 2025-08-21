@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, AfterViewInit, PLATFORM_ID } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { PoseViewerSetting } from '../../modules/settings/settings.state';
-import { AsyncPipe, TitleCasePipe } from '@angular/common';
+import { AsyncPipe, TitleCasePipe, isPlatformBrowser } from '@angular/common';
 import { SkeletonPoseViewerComponent } from '../translate/pose-viewers/skeleton-pose-viewer/skeleton-pose-viewer.component';
 import { HumanPoseViewerComponent } from '../translate/pose-viewers/human-pose-viewer/human-pose-viewer.component';
 import { AvatarPoseViewerComponent } from '../translate/pose-viewers/avatar-pose-viewer/avatar-pose-viewer.component';
@@ -13,7 +13,7 @@ import {
 } from '../../modules/translate/translate.actions';
 import { SetSetting } from '../../modules/settings/settings.actions';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { fromEvent } from 'rxjs';
+import { fromEvent, Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
 type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating';
@@ -34,7 +34,10 @@ type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating';
 export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   private store = inject(Store);
   private route = inject(ActivatedRoute);
+  private platformId = inject(PLATFORM_ID);
   private tabBar: HTMLElement;
+  private poseEndedSubscription: Subscription;
+  private cookieConsentElement: HTMLElement;
 
   @ViewChild(SkeletonPoseViewerComponent) poseViewer: SkeletonPoseViewerComponent;
 
@@ -80,9 +83,18 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit(): void {
-    this.tabBar = document.querySelector('ion-tab-bar');
-    if (this.tabBar) {
-      this.tabBar.style.display = 'none';
+    if (isPlatformBrowser(this.platformId)) {
+      this.tabBar = document.querySelector('ion-tab-bar');
+      if (this.tabBar) {
+        this.tabBar.style.display = 'none';
+      }
+
+      this.cookieConsentElement = document.querySelector('.cc-modal');
+      if (this.cookieConsentElement) {
+        this.cookieConsentElement.style.display = 'none';
+      }
+
+      document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
     }
 
     this.store.dispatch([
@@ -103,14 +115,12 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       if (toLang === 'gsl') toLang = 'gsg';
       this.toLanguage.set(toLang);
     });
-
-    document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
   }
 
   ngAfterViewInit(): void {
-    if (this.poseViewer) {
+    if (isPlatformBrowser(this.platformId) && this.poseViewer) {
       const pose = this.poseViewer.poseEl().nativeElement;
-      fromEvent(pose, 'ended$')
+      this.poseEndedSubscription = fromEvent(pose, 'ended$')
         .pipe(
           tap(async () => {
             setTimeout(async () => {
@@ -123,22 +133,34 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy(): void {
-    if (this.tabBar) {
-      this.tabBar.style.display = 'flex'; // Or its original display value
+    if (isPlatformBrowser(this.platformId)) {
+      if (this.tabBar) {
+        this.tabBar.style.display = 'flex'; // Or its original display value
+      }
+
+      if (this.cookieConsentElement) {
+        this.cookieConsentElement.style.display = 'block';
+      }
+
+      document.removeEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
     }
-    document.removeEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
+    if (this.poseEndedSubscription) {
+      this.poseEndedSubscription.unsubscribe();
+    }
   }
 
   handleVisibilityChange(): void {
-    if (!this.poseViewer) {
-      return;
-    }
+    if (isPlatformBrowser(this.platformId)) {
+      if (!this.poseViewer) {
+        return;
+      }
 
-    const pose = this.poseViewer.poseEl().nativeElement;
-    if (document.hidden) {
-      pose.pause();
-    } else {
-      pose.play();
+      const pose = this.poseViewer.poseEl().nativeElement;
+      if (document.hidden) {
+        pose.pause();
+      } else {
+        pose.play();
+      }
     }
   }
 
