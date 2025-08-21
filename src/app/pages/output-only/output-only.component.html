@@ -38,7 +38,9 @@
         <!-- Fallback display if no video and no pose -->
         @else {
           <div class="sign-display">
-            <p>No poses found for {{ inputText.toLowerCase() }}/{{ inputText.toLowerCase() }}</p>
+            <div class="loading-message">
+              <p>Generating sign language translation for "{{ inputText }}"...</p>
+            </div>
           </div>
         }
       }

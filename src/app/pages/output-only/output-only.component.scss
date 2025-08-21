@@ -6,9 +6,16 @@
   justify-content: center;
   background: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  padding: 20px;
+  padding: 0;
+  margin: 0;
   box-sizing: border-box;
-  overflow-y: auto;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
 }
 
 .translation-result {
@@ -53,6 +60,20 @@
   text-align: center;
 }
 
+.loading-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-message p {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0;
+  font-weight: 500;
+}
+
 .sign-display p {
   font-size: 1.2rem;
   color: #333;
@@ -75,9 +96,26 @@
   margin: 10px 0;
 }
 
+/* Hide any potential navigation or UI elements */
+ion-tab-bar, ion-tabs, ion-header, ion-footer, .tab-bar, .header, .footer {
+  display: none !important;
+}
+
+/* Ensure full screen display */
+ion-content {
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+
 @media (max-width: 768px) {
   .output-only-container {
-    padding: 10px;
+    padding: 0;
+  }
+  
+  .loading-message p {
+    font-size: 1.2rem;
   }
 }
 
