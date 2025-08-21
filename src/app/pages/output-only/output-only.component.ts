@@ -60,6 +60,8 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       const pose = this.pose();
       if (pose && this.status() === 'loading') {
           this.status.set('preview');
+          // Request video as soon as pose is available to reduce preview lag
+          this.store.dispatch(new SetSetting('receiveVideo', true));
       }
     });
 
@@ -120,14 +122,15 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
         .pipe(
           tap(async () => {
             // After the pose animation ends, request the video
-            this.store.dispatch(new SetSetting('receiveVideo', true));
+            // This is now redundant as receiveVideo is set earlier
+            // this.store.dispatch(new SetSetting('receiveVideo', true));
           })
         )
         .subscribe();
     }
 
     if (this.videoPlayer) {
-        this.videoPlayer.nativeElement.playbackRate = 0.75;
+        this.videoPlayer.nativeElement.playbackRate = 0.333;
     }
   }
 
