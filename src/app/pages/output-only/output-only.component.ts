@@ -1,7 +1,7 @@
-import { Component, OnInit, inject, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, Subscription, timer } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Store } from '@ngxs/store';
 import { TranslateState } from '../../modules/translate/translate.state';
 import { PoseViewerSetting } from '../../modules/settings/settings.state';
@@ -30,7 +30,7 @@ import { SetSetting } from '../../modules/settings/settings.actions';
     AvatarPoseViewerComponent
   ]
 })
-export class OutputOnlyComponent implements OnInit, OnDestroy {
+export class OutputOnlyComponent implements OnInit {
   private store = inject(Store);
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
@@ -45,65 +45,47 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
   fromLanguage: string = '';
   toLanguage: string = '';
 
-  private subscriptions: Subscription[] = [];
-
   constructor() { }
 
   ngOnInit(): void {
     // Initialize default settings like the main translate component
     this.store.dispatch([
       new SetSetting('receiveVideo', true),
-      new SetSetting('detectSign', false),
-      new SetSetting('drawSignWriting', false),
-      new SetSetting('drawPose', true),
-      new SetSetting('poseViewer', 'pose'),
+                        new SetSetting('detectSign', false),
+                        new SetSetting('drawSignWriting', false),
+                        new SetSetting('drawPose', true),
+                        new SetSetting('poseViewer', 'pose'),
     ]);
 
     // Handle query parameters
-    const paramsSub = this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe(params => {
       this.inputText = params['text'] || '';
       this.fromLanguage = params['from'] || 'en';
       this.toLanguage = params['to'] || 'ase'; // Convert 'asl' to 'ase' (American Sign Language)
 
-      // Convert common language codes to the format expected by the backend
-      if (this.toLanguage === 'asl') {
-        this.toLanguage = 'ase';
-      }
-      if (this.toLanguage === 'gsl') {
-        this.toLanguage = 'gsg';
-      }
-      if (this.toLanguage === 'fsl') {
-        this.toLanguage = 'fsl';
-      }
+    // Convert common language codes to the format expected by the backend
+    if (this.toLanguage === 'asl') {
+      this.toLanguage = 'ase';
+    }
+    if (this.toLanguage === 'gsl') {
+      this.toLanguage = 'gsg';
+    }
+    if (this.toLanguage === 'fsl') {
+      this.toLanguage = 'fsl';
+    }
 
-      if (this.inputText) {
-        this.processTranslation();
-      }
+    if (this.inputText) {
+      this.processTranslation();
+    }
     });
-    this.subscriptions.push(paramsSub);
 
     // Keep existing store subscriptions for backward compatibility
     this.pose$ = this.store.select(state => state.translate.signedLanguagePose);
     this.poseViewerSetting$ = this.store.select(state => state.settings.poseViewer);
-    
-    const videoSub = this.store.select(state => state.translate.signedLanguageVideo).subscribe(url => {
+    this.store.select(state => state.translate.signedLanguageVideo).subscribe(url => {
       this.videoUrl = url as string;
       this.safeVideoUrl = url ? this.sanitizer.bypassSecurityTrustUrl(url as string) : undefined;
     });
-    this.subscriptions.push(videoSub);
-
-    // Auto-retry mechanism for failed translations
-    const retrySub = timer(5000, 10000).subscribe(() => {
-      if (this.inputText && !this.videoUrl && !this.pose$) {
-        console.log('Retrying translation...');
-        this.processTranslation();
-      }
-    });
-    this.subscriptions.push(retrySub);
-  }
-
-  ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   private async processTranslation(): Promise<void> {
@@ -115,30 +97,13 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
       // Then set the text, which automatically triggers ChangeTranslation
       await this.store.dispatch(new SetSpokenLanguageText(this.inputText)).toPromise();
 
-      // Force translation change if needed
-      setTimeout(() => {
-        this.store.dispatch(new ChangeTranslation());
-      }, 100);
-
     } catch (error) {
       console.error('Translation error:', error);
-      // Retry after error
-      setTimeout(() => {
-        if (this.inputText) {
-          this.processTranslation();
-        }
-      }, 2000);
     }
   }
 
   onVideoError(event: Event): void {
     console.error('Video error:', event);
-    // Try to reload the video after error
-    setTimeout(() => {
-      if (this.inputText) {
-        this.processTranslation();
-      }
-    }, 1000);
   }
 
   playVideoIfPaused(event: Event): void {
@@ -172,4 +137,3 @@ export class OutputOnlyComponent implements OnInit, OnDestroy {
     return languageMap[code] || code.toUpperCase();
   }
 }
-

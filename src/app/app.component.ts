@@ -85,11 +85,6 @@ export class AppComponent implements AfterViewInit {
   }
 
   initCookieConsent() {
-    // Check if we're in browser environment
-    if (typeof window === 'undefined' || typeof location === 'undefined') {
-      return Promise.resolve();
-    }
-
     return CookieConsent.run({
       root: 'body',
       autoShow: true,
@@ -234,5 +229,3 @@ export class AppComponent implements AfterViewInit {
     Keyboard.addListener('keyboardWillHide', () => html.classList.remove(className));
   }
 }
-
-live
