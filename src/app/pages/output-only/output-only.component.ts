@@ -125,6 +125,10 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
         )
         .subscribe();
     }
+
+    if (this.videoPlayer) {
+        this.videoPlayer.nativeElement.playbackRate = 0.75;
+    }
   }
 
   ngOnDestroy(): void {
