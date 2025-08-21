@@ -13,8 +13,6 @@ import {
 } from '../../modules/translate/translate.actions';
 import { SetSetting } from '../../modules/settings/settings.actions';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { fromEvent, Subscription } from 'rxjs';
-import { tap } from 'rxjs/operators';
 
 type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating';
 
@@ -31,12 +29,11 @@ type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating';
     AvatarPoseViewerComponent,
   ],
 })
-export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
+export class OutputOnlyComponent implements OnInit, OnDestroy {
   private store = inject(Store);
   private route = inject(ActivatedRoute);
   private platformId = inject(PLATFORM_ID);
   private tabBar: HTMLElement;
-  private poseEndedSubscription: Subscription;
   private cookieConsentElement: HTMLElement;
 
   @ViewChild(SkeletonPoseViewerComponent) poseViewer: SkeletonPoseViewerComponent;
@@ -89,12 +86,12 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
         this.tabBar.style.display = 'none';
       }
 
-      this.cookieConsentElement = document.querySelector('.cm');
-      if (this.cookieConsentElement) {
-        this.cookieConsentElement.style.display = 'none';
-      }
-
-      document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
+      setTimeout(() => {
+        this.cookieConsentElement = document.querySelector('.cm');
+        if (this.cookieConsentElement) {
+          this.cookieConsentElement.style.display = 'none';
+        }
+      }, 500);
     }
 
     this.store.dispatch([
@@ -117,21 +114,6 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  ngAfterViewInit(): void {
-    if (isPlatformBrowser(this.platformId) && this.poseViewer) {
-      const pose = this.poseViewer.poseEl().nativeElement;
-      this.poseEndedSubscription = fromEvent(pose, 'ended$')
-        .pipe(
-          tap(async () => {
-            setTimeout(async () => {
-              await pose.play();
-            }, 1500);
-          })
-        )
-        .subscribe();
-    }
-  }
-
   ngOnDestroy(): void {
     if (isPlatformBrowser(this.platformId)) {
       if (this.tabBar) {
@@ -140,26 +122,6 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
 
       if (this.cookieConsentElement) {
         this.cookieConsentElement.style.display = 'block';
-      }
-
-      document.removeEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
-    }
-    if (this.poseEndedSubscription) {
-      this.poseEndedSubscription.unsubscribe();
-    }
-  }
-
-  handleVisibilityChange(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      if (!this.poseViewer) {
-        return;
-      }
-
-      const pose = this.poseViewer.poseEl().nativeElement;
-      if (document.hidden) {
-        pose.pause();
-      } else {
-        pose.play();
       }
     }
   }

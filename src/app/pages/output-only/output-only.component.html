@@ -6,7 +6,11 @@
       </div>
     }
     @case ('translating') {
-        @if (pose(); as poseSrc) {
+        @if (videoUrl(); as video) {
+          <div class="video-container">
+            <video [src]="video" autoplay loop playsinline></video>
+          </div>
+        } @else if (pose(); as poseSrc) {
           <div class="pose-container">
             @switch (poseViewerSetting()) {
               @case ('pose') { <app-skeleton-pose-viewer [src]="poseSrc" /> }
