@@ -71,7 +71,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
           this.status.set('translating');
           setTimeout(() => {
             if (this.videoPlayer) {
-              this.videoPlayer.nativeElement.playbackRate = 5.25;
+              this.videoPlayer.nativeElement.playbackRate = 0.001;
             }
           }, 0);
       }
@@ -137,7 +137,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     if (this.videoPlayer) {
-      this.videoPlayer.nativeElement.playbackRate = 5.25;
+      this.videoPlayer.nativeElement.playbackRate = 0.001;
     }
   }
 
