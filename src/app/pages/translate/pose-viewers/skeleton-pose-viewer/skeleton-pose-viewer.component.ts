@@ -25,31 +25,23 @@ export class SkeletonPoseViewerComponent extends BasePoseViewerComponent impleme
           // startRecording is imperfect, specifically when the tab is out of focus.
           if (!PlayableVideoEncoder.isSupported()) {
             await this.startRecording(poseCanvas as any);
+          } else {
+            // Start capturing frames using requestAnimationFrame
+            const record = async () => {
+              if (pose.currentTime >= pose.duration) {
+                this.stopRecording();
+                return;
+              }
+              const imageBitmap = await createImageBitmap(poseCanvas);
+              await this.addCacheFrame(imageBitmap);
+              requestAnimationFrame(record);
+            };
+            requestAnimationFrame(record);
           }
         }),
         takeUntil(this.ngUnsubscribe)
       )
       .subscribe();
-
-    // Most reliable method to create a video from a canvas
-    if (PlayableVideoEncoder.isSupported()) {
-      let lastRendered = NaN;
-      fromEvent(pose, 'render$')
-        .pipe(
-          tap(async () => {
-            if (pose.currentTime === lastRendered) {
-              // There are possibly redundant renders when video is paused or tab is out of focus
-              return;
-            }
-            const poseCanvas = pose.shadowRoot.querySelector('canvas');
-            const imageBitmap = await createImageBitmap(poseCanvas);
-            await this.addCacheFrame(imageBitmap);
-            lastRendered = pose.currentTime;
-          }),
-          takeUntil(this.ngUnsubscribe)
-        )
-        .subscribe();
-    }
 
     fromEvent(pose, 'ended$')
       .pipe(
