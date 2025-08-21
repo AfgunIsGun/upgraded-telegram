@@ -103,6 +103,8 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       if (toLang === 'gsl') toLang = 'gsg';
       this.toLanguage.set(toLang);
     });
+
+    document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
   }
 
   ngAfterViewInit(): void {
@@ -123,6 +125,20 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     if (this.tabBar) {
       this.tabBar.style.display = 'flex'; // Or its original display value
+    }
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
+  }
+
+  handleVisibilityChange(): void {
+    if (!this.poseViewer) {
+      return;
+    }
+
+    const pose = this.poseViewer.poseEl().nativeElement;
+    if (document.hidden) {
+      pose.pause();
+    } else {
+      pose.play();
     }
   }
 
