@@ -16,6 +16,9 @@
 .video-container, .pose-container {
   width: 100%;
   height: 100%;
+}
+
+.pose-container {
   display: flex;
   align-items: center;
   justify-content: center;
