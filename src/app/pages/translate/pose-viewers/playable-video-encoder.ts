@@ -118,6 +118,7 @@ export class PlayableVideoEncoder {
         codec: 'avc',
         width: this.width,
         height: this.height,
+        frameRate: this.fps,
       },
     });
   }

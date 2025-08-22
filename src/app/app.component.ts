@@ -9,7 +9,7 @@ import {languageCodeNormalizer} from './core/modules/transloco/languages';
 import {Meta} from '@angular/platform-browser';
 import {IonApp, IonRouterOutlet} from '@ionic/angular/standalone';
 import {getUrlParams} from './core/helpers/url';
-import * as CookieConsent from 'vanilla-cookieconsent';
+// 
 import {ConsentStatus, ConsentType, FirebaseAnalytics} from '@capacitor-firebase/analytics';
 import {MediaMatcher} from '@angular/cdk/layout';
 
@@ -50,7 +50,7 @@ export class AppComponent implements AfterViewInit {
       await SplashScreen.hide();
     }
 
-    this.initCookieConsent();
+    // this.initCookieConsent();
   }
 
   updateToolbarColor() {
@@ -84,7 +84,7 @@ export class AppComponent implements AfterViewInit {
     onColorSchemeChange();
   }
 
-  initCookieConsent() {
+  /* initCookieConsent() {
     return CookieConsent.run({
       root: 'body',
       autoShow: true,
@@ -164,7 +164,7 @@ export class AppComponent implements AfterViewInit {
           },
       },
     });
-  }
+  } */
 
   logRouterNavigation() {
     const isLanguageLoaded = firstValueFrom(
