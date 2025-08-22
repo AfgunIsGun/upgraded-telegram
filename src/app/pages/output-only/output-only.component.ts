@@ -92,12 +92,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
         this.tabBar.style.display = 'none';
       }
 
-      setTimeout(() => {
-        const acceptAllButton = document.querySelector('button[data-role="all"]');
-        if (acceptAllButton) {
-          (acceptAllButton as HTMLElement).click();
-        }
-      }, 2000); // Increased timeout
+      
     }
 
     this.store.dispatch([
