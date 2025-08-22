@@ -15,6 +15,7 @@ export class SkeletonPoseViewerComponent extends BasePoseViewerComponent impleme
 
   ngAfterViewInit(): void {
     const pose = this.poseEl().nativeElement;
+    pose.playbackRate = 0.5;
 
     fromEvent(pose, 'firstRender$')
       .pipe(
