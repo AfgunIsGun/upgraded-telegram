@@ -3,302 +3,362 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System24 Translate</title>
+    <title>Sign Translate Interface</title>
     <style>
-        @font-face {
-            font-family: 'Press Start 2P';
-            src: url('https://fonts.gstatic.com/s/pressstart2p/v15/8Lg6ZgMJPfJ8_L6tfd_R_l1EwS_Y-w.woff2') format('woff2');
-            font-weight: 400;
-            font-style: normal;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            margin: 0;
-            overflow: hidden;
-            font-family: 'Press Start 2P', cursive;
-            background-color: #0a0a0a;
-            color: #00ff00;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            perspective: 1000px;
-        }
-
-        .parallax-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transform-style: preserve-3d;
-            overflow: hidden;
-        }
-
-        .parallax-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2em;
-            text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
-        }
-
-        .layer-back {
-            transform: translateZ(-300px) scale(2);
-            opacity: 0.1;
-        }
-
-        .layer-middle {
-            transform: translateZ(-150px) scale(1.5);
-            opacity: 0.3;
-        }
-
-        .layer-front {
-            transform: translateZ(0);
-            opacity: 1;
-        }
-
-        .terminal-window {
-            background-color: rgba(0, 0, 0, 0.8);
-            border: 2px solid #00ff00;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
             padding: 20px;
-            width: 90%;
-            max-width: 800px;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-            z-index: 100;
-            animation: glitch-in 0.5s forwards;
-            display: flex;
-            flex-direction: column;
         }
 
-        @keyframes glitch-in {
-            0% { transform: scale(0.8) rotateX(10deg); opacity: 0; }
-            100% { transform: scale(1) rotateX(0deg); opacity: 1; }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 1200px;
+            width: 100%;
+            backdrop-filter: blur(10px);
         }
 
-        .terminal-header {
+        .header {
             text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.2em;
-            color: #00ff00;
+            margin-bottom: 40px;
         }
 
-        .terminal-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .input-group, .output-group {
-            background-color: rgba(0, 255, 0, 0.1);
-            border: 1px solid #00ff00;
-            padding: 15px;
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            font-weight: 700;
             margin-bottom: 10px;
         }
 
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #00ff00;
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
         }
 
-        textarea, select, button {
-            width: 100%;
-            padding: 10px;
-            background-color: #0a0a0a;
-            border: 1px solid #00ff00;
-            color: #00ff00;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 0.8em;
-            box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
-            outline: none;
+        .translation-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
         }
 
-        textarea {
-            min-height: 80px;
-            resize: vertical;
+        .input-section, .output-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
         }
 
-        button {
+        .input-section:focus-within {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .language-selector {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            color: #333;
             cursor: pointer;
-            margin-top: 10px;
-            transition: background-color 0.3s, color 0.3s;
+            transition: all 0.2s ease;
         }
 
-        button:hover {
-            background-color: #00ff00;
-            color: #0a0a0a;
+        .language-selector:hover {
+            border-color: #667eea;
         }
 
-        .output-frame-container {
+        .text-input {
             width: 100%;
-            height: 250px;
-            border: 1px solid #00ff00;
-            overflow: hidden;
-            background-color: #0a0a0a;
+            min-height: 150px;
+            border: none;
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: vertical;
+            outline: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .text-input:focus {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .output-area {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 150px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
         }
 
-        iframe {
+        .skeleton-container {
             width: 100%;
-            height: 100%;
-            border: none;
-            background-color: #0a0a0a;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed #ddd;
         }
 
-        .status-message {
+        .skeleton-placeholder {
+            color: #999;
+            font-size: 1.1rem;
             text-align: center;
-            margin-top: 20px;
-            font-size: 0.9em;
-            color: #00ff00;
         }
 
-        .hidden {
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e9ecef;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
             display: none;
         }
 
-        /* Glitch effect */
-        .glitch {
-            animation: glitch 2.5s infinite;
+        .iframe-container {
+            width: 100%;
+            height: 400px;
+            border: none;
+            border-radius: 10px;
+            overflow: hidden;
         }
 
-        @keyframes glitch {
-            0% { text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; transform: translate(0); }
-            20% { text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; transform: translate(-2px, 2px); }
-            40% { text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; transform: translate(-2px, -2px); }
-            60% { text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; transform: translate(2px, 2px); }
-            80% { text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; transform: translate(2px, -2px); }
-            100% { text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; transform: translate(0); }
-        }
-
-        /* CRT Scanlines */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
+        .iframe-container iframe {
             width: 100%;
             height: 100%;
-            background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15) 1px, transparent 1px, transparent 2px);
-            pointer-events: none;
-            z-index: 9999;
+            border: none;
         }
 
-        /* Responsive adjustments */
         @media (max-width: 768px) {
-            .terminal-window {
-                padding: 15px;
+            .translation-area {
+                grid-template-columns: 1fr;
+                gap: 20px;
             }
-            .terminal-header {
-                font-size: 1em;
+            
+            .container {
+                padding: 20px;
             }
-            textarea, select, button {
-                font-size: 0.7em;
+            
+            .header h1 {
+                font-size: 2rem;
             }
-            .output-frame-container {
-                height: 200px;
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
             }
         }
     </style>
 </head>
 <body>
-    <div class="parallax-container">
-        <div class="parallax-layer layer-back">SYSTEM24</div>
-        <div class="parallax-layer layer-middle">TRANSLATE</div>
-        <div class="parallax-layer layer-front">INITIATING...</div>
-    </div>
-
-    <div class="terminal-window hidden" id="terminalWindow">
-        <div class="terminal-header glitch">
-            > SYSTEM24 // SIGN TRANSLATE INTERFACE
+    <div class="container">
+        <div class="header">
+            <h1>Sign Translate</h1>
+            <p>Real-time sign language translation powered by AI</p>
         </div>
-        <div class="terminal-content">
-            <div class="input-group">
-                <label for="inputText">INPUT TEXT:</label>
-                <textarea id="inputText" placeholder="ENTER TEXT..."></textarea>
-                <label for="inputLang">FROM LANGUAGE:</label>
-                <select id="inputLang">
-                    <option value="en">ENGLISH</option>
-                    <option value="de">GERMAN</option>
-                    <option value="fr">FRENCH</option>
-                    <option value="auto">AUTO-DETECT</option>
-                </select>
-            </div>
 
-            <div class="output-group">
-                <label for="outputLang">TO SIGN LANGUAGE:</label>
-                <select id="outputLang">
-                    <option value="asl">AMERICAN SIGN LANGUAGE</option>
-                    <option value="gsl">GERMAN SIGN LANGUAGE</option>
-                    <option value="fsl">FRENCH SIGN LANGUAGE</option>
-                </select>
-                <div class="output-frame-container">
-                    <iframe id="translationFrame" src=""></iframe>
+        <div class="translation-area">
+            <div class="input-section">
+                <div class="section-header">
+                    <span class="section-title">Input Text</span>
+                    <select class="language-selector" id="inputLang">
+                        <option value="en">English</option>
+                        <option value="de">German</option>
+                        <option value="fr">French</option>
+                        <option value="auto">Detect Language</option>
+                    </select>
+                </div>
+                <textarea 
+                    class="text-input" 
+                    id="inputText" 
+                    placeholder="Enter text to translate to sign language..."
+                    maxlength="500"
+                ></textarea>
+                <div style="text-align: right; margin-top: 10px; color: #666; font-size: 0.9rem;">
+                    <span id="charCount">0</span> / 500
                 </div>
             </div>
 
-            <button id="translateBtn">EXECUTE TRANSLATION</button>
-            <button id="clearBtn">CLEAR INTERFACE</button>
+            <div class="output-section">
+                <div class="section-header">
+                    <span class="section-title">Sign Language Output</span>
+                    <select class="language-selector" id="outputLang">
+                        <option value="asl">American Sign Language</option>
+                        <option value="gsl">German Sign Language</option>
+                        <option value="fsl">French Sign Language</option>
+                    </select>
+                </div>
+                <div class="output-area">
+                    <div class="iframe-container" id="iframeContainer">
+                        <iframe id="translationFrame" src=""></iframe>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="status-message" id="statusMessage">READY. AWAITING COMMAND.</div>
+
+        <div class="controls">
+            <button class="btn" id="translateBtn">
+                <span>🔄</span>
+                Translate
+            </button>
+            <button class="btn btn-secondary" id="clearBtn">
+                <span>🗑️</span>
+                Clear
+            </button>
+        </div>
+
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <span>Translating...</span>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
     </div>
 
     <script>
-        class System24Translate {
+        class SignTranslateInterface {
             constructor() {
                 this.baseUrl = 'https://golgrax-backend.vercel.app';
                 this.initializeElements();
                 this.bindEvents();
-                this.setupParallax();
-                this.showTerminalAfterDelay();
             }
 
             initializeElements() {
-                this.parallaxLayers = document.querySelectorAll('.parallax-layer');
-                this.terminalWindow = document.getElementById('terminalWindow');
                 this.inputText = document.getElementById('inputText');
-                this.inputLang = document.getElementById('inputLang');
-                this.outputLang = document.getElementById('outputLang');
+                this.charCount = document.getElementById('charCount');
                 this.translateBtn = document.getElementById('translateBtn');
                 this.clearBtn = document.getElementById('clearBtn');
+                this.loadingIndicator = document.getElementById('loadingIndicator');
+                this.errorMessage = document.getElementById('errorMessage');
+                this.iframeContainer = document.getElementById('iframeContainer');
                 this.translationFrame = document.getElementById('translationFrame');
-                this.statusMessage = document.getElementById('statusMessage');
+                this.inputLang = document.getElementById('inputLang');
+                this.outputLang = document.getElementById('outputLang');
             }
 
             bindEvents() {
+                this.inputText.addEventListener('input', () => this.updateCharCount());
+                this.inputText.addEventListener('input', () => this.debounceTranslate());
                 this.translateBtn.addEventListener('click', () => this.translate());
                 this.clearBtn.addEventListener('click', () => this.clear());
-                this.inputText.addEventListener('input', () => this.debounceTranslate());
+                
+                // Real-time translation on language change
                 this.inputLang.addEventListener('change', () => this.debounceTranslate());
                 this.outputLang.addEventListener('change', () => this.debounceTranslate());
             }
 
-            setupParallax() {
-                document.addEventListener('mousemove', (e) => {
-                    const x = (window.innerWidth / 2 - e.clientX) / 50;
-                    const y = (window.innerHeight / 2 - e.clientY) / 50;
-
-                    this.parallaxLayers.forEach((layer, index) => {
-                        const depth = (index + 1) * 50; // Adjust depth for more pronounced effect
-                        layer.style.transform = `translateZ(-${depth}px) translateX(${x * (index + 1)}px) translateY(${y * (index + 1)}px)`;
-                    });
-                });
-            }
-
-            showTerminalAfterDelay() {
-                setTimeout(() => {
-                    this.parallaxLayers.forEach(layer => layer.classList.add('hidden'));
-                    this.terminalWindow.classList.remove('hidden');
-                }, 2000); // Simulate boot-up delay
+            updateCharCount() {
+                const count = this.inputText.value.length;
+                this.charCount.textContent = count;
+                
+                if (count > 450) {
+                    this.charCount.style.color = '#dc3545';
+                } else if (count > 400) {
+                    this.charCount.style.color = '#ffc107';
+                } else {
+                    this.charCount.style.color = '#666';
+                }
             }
 
             debounceTranslate() {
@@ -310,52 +370,66 @@
                 }, 1000); // Wait 1 second after user stops typing
             }
 
-            translate() {
+            async translate() {
                 const text = this.inputText.value.trim();
                 if (!text) {
-                    this.updateStatus('ERROR: INPUT TEXT REQUIRED.', true);
+                    this.showError('Please enter some text to translate.');
                     return;
                 }
 
-                this.updateStatus('PROCESSING TRANSLATION...', false);
+                this.showLoading(true);
+                this.hideError();
+
+                try {
+                    await this.translateWithIframe(text);
+                } catch (error) {
+                    console.error('Translation error:', error);
+                    this.showError('Translation failed. Please try again.');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async translateWithIframe(text) {
+                // Create a URL with the text pre-filled
                 const params = new URLSearchParams({
                     text: text,
                     from: this.inputLang.value,
                     to: this.outputLang.value
                 });
+                
                 const iframeUrl = `${this.baseUrl}/output?${params.toString()}`;
+                
                 this.translationFrame.src = iframeUrl;
-
-                this.translationFrame.onload = () => {
-                    this.updateStatus('TRANSLATION COMPLETE. DISPLAYING OUTPUT.', false);
-                };
-                this.translationFrame.onerror = () => {
-                    this.updateStatus('ERROR: FAILED TO LOAD TRANSLATION OUTPUT.', true);
-                };
             }
 
             clear() {
                 this.inputText.value = '';
+                this.updateCharCount();
+                this.hideError();
                 this.translationFrame.src = '';
-                this.updateStatus('INTERFACE CLEARED. READY. AWAITING COMMAND.', false);
             }
 
-            updateStatus(message, isError) {
-                this.statusMessage.textContent = message;
-                this.statusMessage.style.color = isError ? '#ff0000' : '#00ff00';
-                if (isError) {
-                    this.statusMessage.classList.add('glitch');
-                } else {
-                    this.statusMessage.classList.remove('glitch');
-                }
+            showLoading(show) {
+                this.loadingIndicator.style.display = show ? 'flex' : 'none';
+                this.translateBtn.disabled = show;
+            }
+
+            showError(message) {
+                this.errorMessage.textContent = message;
+                this.errorMessage.style.display = 'block';
+            }
+
+            hideError() {
+                this.errorMessage.style.display = 'none';
             }
         }
 
+        // Initialize the application when the page loads
         document.addEventListener('DOMContentLoaded', () => {
-            new System24Translate();
+            new SignTranslateInterface();
         });
     </script>
 </body>
 </html>
-
 
