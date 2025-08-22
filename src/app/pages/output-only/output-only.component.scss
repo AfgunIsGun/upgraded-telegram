@@ -37,3 +37,9 @@ video {
   padding: 8px 16px;
   cursor: pointer;
 }
+
+app-skeleton-pose-viewer,
+app-human-pose-viewer,
+app-avatar-pose-viewer {
+  height: auto;
+}
