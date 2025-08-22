@@ -42,10 +42,10 @@ app-skeleton-pose-viewer,
 app-human-pose-viewer,
 app-avatar-pose-viewer {
   height: auto;
-  transform: scale(0.87);
+  transform: scale(0.875);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  top: -100px;
+  top: -120px;
 }
