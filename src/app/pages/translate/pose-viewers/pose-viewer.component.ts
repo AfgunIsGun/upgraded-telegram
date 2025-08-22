@@ -73,8 +73,9 @@ export abstract class BasePoseViewerComponent extends BaseComponent implements O
   }
 
   async fps() {
-    const pose = await this.poseEl().nativeElement.getPose();
-    return pose.body.fps;
+    // const pose = await this.poseEl().nativeElement.getPose();
+    // return pose.body.fps;
+    return 25;
   }
 
   async initVideoEncoder(image: ImageBitmap) {
