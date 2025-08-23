@@ -341,6 +341,55 @@
             background: transparent;
         }
 
+        /* Options Panel */
+        .options-panel {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 20, 0, 0.5);
+            border: 1px solid #00ff00;
+            border-radius: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cli-checkbox {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 1px solid #00ff00;
+            background: rgba(0,0,0,0.8);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .cli-checkbox:checked::before {
+            content: 'X';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff00;
+            font-size: 12px;
+        }
+
+        .cli-number-input {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            width: 70px;
+        }
+
         /* Control Buttons */
         .control-panel {
             display: flex;
@@ -449,7 +498,7 @@
                 padding: 20px;
             }
             
-            .control-panel {
+            .control-panel, .options-panel {
                 flex-direction: column;
                 align-items: center;
             }
@@ -602,6 +651,11 @@
                     <div class="output-panel">
                         <div class="panel-header">
                             <span class="panel-title">OUTPUT_STREAM</span>
+                             <select class="language-select" id="viewerType">
+                                <option value="pose">SKELETON</option>
+                                <option value="person">HUMAN</option>
+                                <option value="avatar">AVATAR</option>
+                            </select>
                             <select class="language-select" id="outputLang">
                                 <option value="asl">ASL</option>
                                 <option value="gsl">GSL</option>
@@ -613,6 +667,18 @@
                                 <iframe id="translationFrame" src=""></iframe>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Options Panel -->
+                <div class="options-panel">
+                    <div class="option-item">
+                        <input type="checkbox" id="signWriting" class="cli-checkbox">
+                        <label for="signWriting">ENABLE_SIGNWRITING</label>
+                    </div>
+                    <div class="option-item">
+                        <label for="playbackSpeed">PLAYBACK_SPEED:</label>
+                        <input type="number" id="playbackSpeed" class="cli-number-input" value="1.0" step="0.1" min="0.1">
                     </div>
                 </div>
 
@@ -702,6 +768,9 @@
                 this.translationFrame = document.getElementById('translationFrame');
                 this.inputLang = document.getElementById('inputLang');
                 this.outputLang = document.getElementById('outputLang');
+                this.viewerType = document.getElementById('viewerType');
+                this.signWriting = document.getElementById('signWriting');
+                this.playbackSpeed = document.getElementById('playbackSpeed');
             }
 
             bindEvents() {
@@ -712,6 +781,9 @@
                 
                 this.inputLang.addEventListener('change', () => this.debounceTranslate());
                 this.outputLang.addEventListener('change', () => this.debounceTranslate());
+                this.viewerType.addEventListener('change', () => this.debounceTranslate());
+                this.signWriting.addEventListener('change', () => this.debounceTranslate());
+                this.playbackSpeed.addEventListener('input', () => this.debounceTranslate());
 
                 // Sync textarea and iframe height
                 const initialTextareaHeight = this.inputText.offsetHeight;
@@ -784,7 +856,10 @@
                 const params = new URLSearchParams({
                     text: text,
                     from: this.inputLang.value,
-                    to: this.outputLang.value
+                    to: this.outputLang.value,
+                    viewer: this.viewerType.value,
+                    signwriting: this.signWriting.checked,
+                    speed: this.playbackSpeed.value
                 });
                 
                 const iframeUrl = `${this.baseUrl}/output?${params.toString()}`;
@@ -868,4 +943,3 @@
     </script>
 </body>
 </html>
-
