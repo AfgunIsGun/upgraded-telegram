@@ -47,6 +47,7 @@ app-avatar-pose-viewer {
   max-width: 100%;
   max-height: 100%;
   aspect-ratio: 1 / 1;
+  margin: auto;
 }
 
 :host ::ng-deep app-skeleton-pose-viewer pose-viewer {
