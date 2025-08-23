@@ -41,7 +41,6 @@ video {
 app-skeleton-pose-viewer,
 app-human-pose-viewer,
 app-avatar-pose-viewer {
-  /* These properties will now perfectly center the child element */
   width: 100%;
   height: 100%;
   display: flex;
@@ -49,14 +48,6 @@ app-avatar-pose-viewer {
   justify-content: center;
 }
 
-/* MODIFIED SECTION */
 :host ::ng-deep app-skeleton-pose-viewer pose-viewer {
-  /* Tell the element to fill the height of the parent */
-  height: 100%;
-  
-  /* Set the natural aspect ratio of your skeleton. Adjust this value as needed. */
-  aspect-ratio: 2 / 3;
-
-  /* Ensure it doesn't grow wider than its container */
-  max-width: 100%;
+  font-size: min(5vw, 5vh);
 }
