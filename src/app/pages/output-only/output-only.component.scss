@@ -49,5 +49,5 @@ app-avatar-pose-viewer {
 }
 
 :host ::ng-deep app-skeleton-pose-viewer pose-viewer {
-  font-size: 5vw;
+  font-size: min(5vw, 5vh);
 }
