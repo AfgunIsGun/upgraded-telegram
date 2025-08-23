@@ -16,7 +16,7 @@
             font-family: 'Courier New', monospace;
             background: #000;
             color: #00ff00;
-            overflow: hidden;
+            overflow: auto;
             position: relative;
             min-height: 100vh;
             user-select: none;
@@ -712,6 +712,25 @@
                 
                 this.inputLang.addEventListener('change', () => this.debounceTranslate());
                 this.outputLang.addEventListener('change', () => this.debounceTranslate());
+
+                // Sync textarea and iframe height
+                const initialTextareaHeight = this.inputText.offsetHeight;
+                const initialIframeHeight = this.iframeContainer.offsetHeight;
+
+                const resizeObserver = new ResizeObserver(entries => {
+                    for (let entry of entries) {
+                        const newTextareaHeight = entry.contentRect.height;
+                        const heightDifference = newTextareaHeight - initialTextareaHeight;
+
+                        const newIframeHeight = initialIframeHeight + heightDifference;
+
+                        if (newIframeHeight >= initialIframeHeight) {
+                            this.iframeContainer.style.height = `${newIframeHeight}px`;
+                        }
+                    }
+                });
+
+                resizeObserver.observe(this.inputText);
             }
 
             initializeEffects() {
