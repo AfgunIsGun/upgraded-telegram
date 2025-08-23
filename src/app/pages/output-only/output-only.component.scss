@@ -47,3 +47,7 @@ app-avatar-pose-viewer {
   align-items: center;
   justify-content: center;
 }
+
+:host ::ng-deep app-skeleton-pose-viewer pose-viewer {
+  font-size: 0.8em;
+}
