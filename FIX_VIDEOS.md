@@ -19,10 +19,10 @@ Copy and paste the entire command block below into your terminal and press Enter
 This will take a significant amount of time to process all the videos.
 
 ```bash
-find src/assets/wlasl -type f -name "*.mp4" -print0 | while IFS= read -r -d '' file; do
+for file in src/assets/wlasl/**/*.mp4; do
   echo "Processing $file..."
   # Use a temporary file to avoid issues with in-place editing
-  ffmpeg -i "$file" -vf scale=1282:720 -ar 16000 -ac 1 -c:v libx264 -c:a aac "temp_output.mp4" && mv "temp_output.mp4" "$file"
+  ffmpeg -i "$file" -vf scale=1282:720 -ar 16000 -ac 1 -c:v libopenh264 -c:a aac "temp_output.mp4" && mv "temp_output.mp4" "$file"
   if [ $? -ne 0 ]; then
     echo "Error processing $file. Aborting."
     exit 1
