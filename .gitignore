@@ -71,4 +71,6 @@ package-lock.json
 bun.lockb
 
 
-dataset/*
+dataset/SL/*
+
+kaggle.json
