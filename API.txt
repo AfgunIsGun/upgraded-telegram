@@ -1,0 +1,175 @@
+MCP
+MCP documentation
+Wan-AI/Wan2.2-Animate
+
+1 MCP Tool
+
+Choose one of the following ways to interact with the API.
+
+This Gradio app can also serve as an MCP server, with an MCP tool corresponding to each API endpoint. To enable this, launch this Gradio app with .launch(mcp_server=True) or set the GRADIO_MCP_SERVER env variable to "True".
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+cURL
+API documentation
+Wan-AI/Wan2.2-Animate
+
+1 API endpoint
+
+Choose one of the following ways to interact with the API.
+
+1. Confirm that you have cURL installed on your system.
+
+$ curl --version
+
+2. Find the API endpoint below corresponding to your desired function in the app. Copy the code snippet, replacing the placeholder values with your own input data. If this is a private Space, you may need to pass your Hugging Face token as well (read more). Or use the to automatically generate your API requests.
+ 
+Making a prediction and getting a result requires 2 requests: a POST and a GET request. The POST request returns an EVENT_ID, which is used in the second GET request to fetch the results. In these snippets, we've used awk and read to parse the results, combining these two requests into one command for ease of use. See curl docs.
+
+
+
+
+
+
+
+PYTHON
+API documentation
+Wan-AI/Wan2.2-Animate
+
+1 API endpoint
+
+Choose one of the following ways to interact with the API.
+
+1. Install the python client (docs) if you don't already have it installed.
+
+$ pip install gradio_client
+
+2. Find the API endpoint below corresponding to your desired function in the app. Copy the code snippet, replacing the placeholder values with your own input data. If this is a private Space, you may need to pass your Hugging Face token as well (read more). Or use the
+
+to automatically generate your API requests.
+API name: /predict Total requests: 907 (77% successful)  |  p50/p90/p99: 0 ms / 0 ms / 0 ms
+
+from gradio_client import Client, handle_file
+
+client = Client("Wan-AI/Wan2.2-Animate")
+result = client.predict(
+	ref_img=handle_file('https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png'),
+	video={"video":handle_file('https://github.com/gradio-app/gradio/raw/main/demo/video_component/files/world.mp4')},
+	model_id="wan2.2-animate-move",
+	model="wan-pro",
+	api_name="/predict"
+)
+print(result)
+
+Accepts 4 parameters:
+
+ref_img dict(path: str | None (Path to a local file), url: str | None (Publicly available url or base64 encoded image), size: int | None (Size of image in bytes), orig_name: str | None (Original filename), mime_type: str | None (mime type of image), is_stream: bool (Can always be set to False), meta: dict(str, Any)) Required
+
+The input value that is provided in the "Reference Image(参考图像)" Image component. For input, either path or url must be provided. For output, path is always provided.
+
+video dict(video: filepath, subtitles: filepath | None) Required
+
+The input value that is provided in the "Template Video(模版视频)" Video component. null
+
+model_id Literal['wan2.2-animate-move', 'wan2.2-animate-mix'] Default: "wan2.2-animate-move"
+
+The input value that is provided in the "Mode(模式)" Dropdown component.
+
+model Literal['wan-pro', 'wan-std'] Default: "wan-pro"
+
+The input value that is provided in the "推理质量(Inference Quality)" Dropdown component.
+Returns tuple of 2 elements
+
+[0] dict(video: filepath, subtitles: filepath | None)
+
+The output value that appears in the "Output Video(输出视频)" Video component.
+
+[1] str
+
+The output value that appears in the "Status(状态)" Textbox component.
+
+
+
+
+
+
+
+
+
+
+JS
+API documentation
+Wan-AI/Wan2.2-Animate
+
+1 API endpoint
+
+Choose one of the following ways to interact with the API.
+
+1. Install the javascript client (docs) if you don't already have it installed.
+
+$ npm i -D @gradio/client
+
+2. Find the API endpoint below corresponding to your desired function in the app. Copy the code snippet, replacing the placeholder values with your own input data. If this is a private Space, you may need to pass your Hugging Face token as well (read more). Or use the
+
+to automatically generate your API requests.
+API name: /predict Total requests: 907 (77% successful)  |  p50/p90/p99: 0 ms / 0 ms / 0 ms
+
+import { Client } from "@gradio/client";
+	
+	const response_0 = await fetch("https://raw.githubusercontent.com/gradio-app/gradio/main/test/test_files/bus.png");
+	const exampleImage = await response_0.blob();
+						
+	const response_1 = await fetch("undefined");
+	const exampleVideo = await response_1.blob();
+						
+	const client = await Client.connect("Wan-AI/Wan2.2-Animate");
+	const result = await client.predict("/predict", { 
+					ref_img: exampleImage, 
+					video: exampleVideo, 		
+			model_id: "wan2.2-animate-move", 		
+			model: "wan-pro", 
+	});
+
+	console.log(result.data);
+	
+
+Accepts 4 parameters:
+
+ref_img Blob | File | Buffer Required
+
+The input value that is provided in the "Reference Image(参考图像)" Image component. For input, either path or url must be provided. For output, path is always provided.
+
+video any Required
+
+The input value that is provided in the "Template Video(模版视频)" Video component. null
+
+model_id string Default: "wan2.2-animate-move"
+
+The input value that is provided in the "Mode(模式)" Dropdown component.
+
+model string Default: "wan-pro"
+
+The input value that is provided in the "推理质量(Inference Quality)" Dropdown component.
+Returns list of 2 elements
+
+[0]
+
+The output value that appears in the "Output Video(输出视频)" Video component.
+
+[1] string
+
+The output value that appears in the "Status(状态)" Textbox component.

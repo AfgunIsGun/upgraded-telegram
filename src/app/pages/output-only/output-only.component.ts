@@ -1,8 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, AfterViewInit, PLATFORM_ID, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { PoseViewerSetting } from '../../modules/settings/settings.state';
-import { AsyncPipe, TitleCasePipe, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import { SkeletonPoseViewerComponent } from '../translate/pose-viewers/skeleton-pose-viewer/skeleton-pose-viewer.component';
 import { HumanPoseViewerComponent } from '../translate/pose-viewers/human-pose-viewer/human-pose-viewer.component';
 import { AvatarPoseViewerComponent } from '../translate/pose-viewers/avatar-pose-viewer/avatar-pose-viewer.component';
@@ -15,8 +14,11 @@ import { SetSetting } from '../../modules/settings/settings.actions';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { fromEvent, Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { Client } from '@gradio/client';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
 
-type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating' | 'preview';
+
+type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating' | 'preview' | 'generating';
 
 @Component({
   selector: 'app-output-only',
@@ -24,8 +26,6 @@ type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating' | 'previe
   styleUrls: ['./output-only.component.scss'],
   standalone: true,
   imports: [
-    AsyncPipe,
-    TitleCasePipe,
     SkeletonPoseViewerComponent,
     HumanPoseViewerComponent,
     AvatarPoseViewerComponent,
@@ -37,6 +37,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   private platformId = inject(PLATFORM_ID);
   private tabBar: HTMLElement;
   private poseEndedSubscription: Subscription;
+  private ffmpeg: FFmpeg;
 
   @ViewChild(SkeletonPoseViewerComponent) poseViewer: SkeletonPoseViewerComponent;
   @ViewChild('videoPlayer') videoPlayer: ElementRef<HTMLVideoElement>;
@@ -49,10 +50,12 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   inputText = signal('');
   fromLanguage = signal('');
   toLanguage = signal('');
+  outputType = signal('skeleton');
 
   // Data from store
   pose = toSignal(this.store.select(state => state.translate.signedLanguagePose));
   videoUrl = toSignal(this.store.select(state => state.translate.signedLanguageVideo));
+  humanVideoUrl = signal<string | null>(null);
   poseViewerSetting = toSignal(this.store.select(state => state.settings.poseViewer));
 
   constructor() {
@@ -60,7 +63,6 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       const pose = this.pose();
       if (pose && this.status() === 'loading') {
           this.status.set('preview');
-          // Request video as soon as pose is available to reduce preview lag
           this.store.dispatch(new SetSetting('receiveVideo', true));
       }
     });
@@ -68,12 +70,17 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
     effect(() => {
       const video = this.videoUrl();
       if (video && this.status() === 'preview') {
+        if (this.outputType() === 'human') {
+          this.status.set('generating');
+          this.generateHumanVideo(video);
+        } else {
           this.status.set('translating');
           setTimeout(() => {
             if (this.videoPlayer) {
               this.videoPlayer.nativeElement.playbackRate = 1;
             }
           }, 0);
+        }
       }
     });
 
@@ -91,12 +98,11 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       if (this.tabBar) {
         this.tabBar.style.display = 'none';
       }
-
-      
+      this.ffmpeg = new FFmpeg();
     }
 
     this.store.dispatch([
-      new SetSetting('receiveVideo', false), // Initially, we want the pose
+      new SetSetting('receiveVideo', false),
       new SetSetting('detectSign', false),
       new SetSetting('drawSignWriting', false),
       new SetSetting('drawPose', true),
@@ -104,7 +110,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
     ]);
 
     this.route.queryParams.subscribe(params => {
-      this.status.set('idle'); // Reset status on new params
+      this.status.set('idle');
       this.inputText.set(params['text'] || '');
       this.fromLanguage.set(params['from'] || 'en');
 
@@ -112,6 +118,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       if (toLang === 'asl') toLang = 'ase';
       if (toLang === 'gsl') toLang = 'gsg';
       this.toLanguage.set(toLang);
+      this.outputType.set(params['output'] || 'skeleton');
     });
   }
 
@@ -121,11 +128,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
         if (this.poseViewer) {
           const pose = this.poseViewer.poseEl().nativeElement;
           this.poseEndedSubscription = fromEvent(pose, 'ended$')
-            .pipe(
-              tap(async () => {
-                pose.play();
-              })
-            )
+            .pipe(tap(async () => { pose.play(); }))
             .subscribe();
         }
       }, 0);
@@ -139,11 +142,55 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     if (isPlatformBrowser(this.platformId)) {
       if (this.tabBar) {
-        this.tabBar.style.display = 'flex'; // Or its original display value
+        this.tabBar.style.display = 'flex';
       }
     }
     if (this.poseEndedSubscription) {
       this.poseEndedSubscription.unsubscribe();
+    }
+  }
+
+  async generateHumanVideo(webmVideoUrl: string): Promise<void> {
+    try {
+      // 1. Load ffmpeg
+      await this.ffmpeg.load({
+        coreURL: '/assets/ffmpeg/ffmpeg-core.js',
+        wasmURL: '/assets/ffmpeg/ffmpeg-core.wasm',
+        workerURL: '/assets/ffmpeg/ffmpeg-core.worker.js',
+      });
+
+      // 2. Fetch and convert video
+      const response = await fetch(webmVideoUrl);
+      const data = await response.arrayBuffer();
+      await this.ffmpeg.writeFile('input.webm', new Uint8Array(data));
+      await this.ffmpeg.exec(['-i', 'input.webm', 'output.mp4']);
+      const mp4Data = await this.ffmpeg.readFile('output.mp4');
+      const mp4Blob = new Blob([(mp4Data as Uint8Array).buffer], { type: 'video/mp4' });
+
+      // 3. Fetch reference image
+      const refImageResponse = await fetch('/assets/human/man.png');
+      const refImageBlob = await refImageResponse.blob();
+
+      // 4. Call Gradio API
+      const client = await Client.connect('Wan-AI/Wan2.2-Animate');
+      const result = await client.predict('/predict', {
+        ref_img: refImageBlob,
+        video: { video: mp4Blob },
+        model_id: 'wan2.2-animate-move',
+        model: 'wan-pro',
+      });
+
+      // 5. Display result
+      const resultUrl = (result.data[0] as any).url;
+      const finalVideoResponse = await fetch(resultUrl);
+      const finalVideoBlob = await finalVideoResponse.blob();
+      this.humanVideoUrl.set(URL.createObjectURL(finalVideoBlob));
+      this.status.set('translating');
+
+    } catch (e) {
+      console.error('Human video generation error:', e);
+      this.error.set('Human video generation failed. Please try again.');
+      this.status.set('error');
     }
   }
 

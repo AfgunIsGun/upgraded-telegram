@@ -334,11 +334,60 @@
             overflow: hidden;
         }
 
-        .iframe-container iframe {
+        .iframe-container iframe, .iframe-container video {
             width: 100%;
             height: 100%;
             border: none;
             background: transparent;
+        }
+
+        /* Options Panel */
+        .options-panel {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 20, 0, 0.5);
+            border: 1px solid #00ff00;
+            border-radius: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cli-checkbox {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 1px solid #00ff00;
+            background: rgba(0,0,0,0.8);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .cli-checkbox:checked::before {
+            content: 'X';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff00;
+            font-size: 12px;
+        }
+
+        .cli-number-input {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            width: 70px;
         }
 
         /* Control Buttons */
@@ -449,7 +498,7 @@
                 padding: 20px;
             }
             
-            .control-panel {
+            .control-panel, .options-panel {
                 flex-direction: column;
                 align-items: center;
             }
@@ -542,6 +591,7 @@
             to { opacity: 1; }
         }
     </style>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.6/dist/ffmpeg.min.js"></script>
 </head>
 <body>
     <!-- Preload Screen -->
@@ -602,6 +652,11 @@
                     <div class="output-panel">
                         <div class="panel-header">
                             <span class="panel-title">OUTPUT_STREAM</span>
+                             <select class="language-select" id="viewerType">
+                                <option value="pose">SKELETON</option>
+                                <option value="person">HUMAN</option>
+                                <option value="avatar">AVATAR</option>
+                            </select>
                             <select class="language-select" id="outputLang">
                                 <option value="asl">ASL</option>
                                 <option value="gsl">GSL</option>
@@ -613,6 +668,18 @@
                                 <iframe id="translationFrame" src=""></iframe>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Options Panel -->
+                <div class="options-panel">
+                    <div class="option-item">
+                        <input type="checkbox" id="signWriting" class="cli-checkbox">
+                        <label for="signWriting">ENABLE_SIGNWRITING</label>
+                    </div>
+                    <div class="option-item">
+                        <label for="playbackSpeed">PLAYBACK_SPEED:</label>
+                        <input type="number" id="playbackSpeed" class="cli-number-input" value="1.0" step="0.1" min="0.1">
                     </div>
                 </div>
 
@@ -638,7 +705,9 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { client as gradioClient } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+
         // Matrix Rain Effect
         function createMatrixRain() {
             const matrixContainer = document.getElementById('matrixRain');
@@ -689,6 +758,8 @@
                 this.initializeElements();
                 this.bindEvents();
                 this.initializeEffects();
+                this.ffmpeg = null;
+                this.FFmpeg = window.FFmpeg;
             }
 
             initializeElements() {
@@ -702,6 +773,9 @@
                 this.translationFrame = document.getElementById('translationFrame');
                 this.inputLang = document.getElementById('inputLang');
                 this.outputLang = document.getElementById('outputLang');
+                this.viewerType = document.getElementById('viewerType');
+                this.signWriting = document.getElementById('signWriting');
+                this.playbackSpeed = document.getElementById('playbackSpeed');
             }
 
             bindEvents() {
@@ -712,6 +786,9 @@
                 
                 this.inputLang.addEventListener('change', () => this.debounceTranslate());
                 this.outputLang.addEventListener('change', () => this.debounceTranslate());
+                this.viewerType.addEventListener('change', () => this.debounceTranslate());
+                this.signWriting.addEventListener('change', () => this.debounceTranslate());
+                this.playbackSpeed.addEventListener('input', () => this.debounceTranslate());
 
                 // Sync textarea and iframe height
                 const initialTextareaHeight = this.inputText.offsetHeight;
@@ -771,10 +848,14 @@
                 this.hideError();
 
                 try {
-                    await this.translateWithIframe(text);
+                    if (this.viewerType.value === 'person') {
+                        await this.translateWithAnimation(text);
+                    } else {
+                        await this.translateWithIframe(text);
+                    }
                 } catch (error) {
                     console.error('Translation error:', error);
-                    this.showError('ERROR: TRANSLATION PROCESS FAILED');
+                    this.showError(`ERROR: ${error.message || 'TRANSLATION PROCESS FAILED'}`);
                 } finally {
                     this.showLoading(false);
                 }
@@ -784,22 +865,109 @@
                 const params = new URLSearchParams({
                     text: text,
                     from: this.inputLang.value,
-                    to: this.outputLang.value
+                    to: this.outputLang.value,
+                    viewer: this.viewerType.value,
+                    signwriting: this.signWriting.checked,
+                    speed: this.playbackSpeed.value
                 });
                 
                 const iframeUrl = `${this.baseUrl}/output?${params.toString()}`;
                 this.translationFrame.src = iframeUrl;
             }
 
+            async translateWithAnimation(text) {
+                this.iframeContainer.innerHTML = ''; // Clear previous output
+
+                // 1. Get skeleton video
+                this.showLoading(true, 'Fetching skeleton animation...');
+                const skeletonParams = new URLSearchParams({
+                    text: text,
+                    from: this.inputLang.value,
+                    to: this.outputLang.value,
+                    viewer: 'pose', // Always get skeleton
+                    signwriting: this.signWriting.checked,
+                    speed: this.playbackSpeed.value
+                });
+                const skeletonIframeUrl = `${this.baseUrl}/output?${skeletonParams.toString()}`;
+
+                const response = await fetch(skeletonIframeUrl);
+                if (!response.ok) throw new Error('Failed to fetch skeleton video page.');
+                const html = await response.text();
+                
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const videoEl = doc.querySelector('video');
+                let webmUrl = videoEl ? videoEl.src : null;
+
+                if (!webmUrl) {
+                    const match = html.match(/<video[^>]+src="([^"]+)"/);
+                    if (match) webmUrl = match[1];
+                }
+
+                if (!webmUrl) throw new Error('Could not find skeleton video URL in the response.');
+
+                if (webmUrl.startsWith('/')) {
+                    webmUrl = this.baseUrl + webmUrl;
+                }
+
+                const webmBlob = await fetch(webmUrl).then(r => r.blob());
+
+                // 2. Convert webm to mp4
+                this.showLoading(true, 'Converting video format (webm to mp4)...');
+                if (!this.ffmpeg) {
+                    this.ffmpeg = this.FFmpeg.createFFmpeg({ log: true });
+                    await this.ffmpeg.load();
+                }
+                
+                this.ffmpeg.FS('writeFile', 'input.webm', await this.FFmpeg.fetchFile(webmBlob));
+                await this.ffmpeg.run('-i', 'input.webm', 'output.mp4');
+                const data = this.ffmpeg.FS('readFile', 'output.mp4');
+                const mp4Blob = new Blob([data.buffer], { type: 'video/mp4' });
+
+                // 3. Animate with Gradio
+                this.showLoading(true, 'Animating human model...');
+                const client = await gradioClient("Wan-AI/Wan2.2-Animate");
+
+                const imageResponse = await fetch('human/man.png');
+                if (!imageResponse.ok) throw new Error('Failed to load reference image.');
+                const imageBlob = await imageResponse.blob();
+
+                const result = await client.predict("/predict", {
+                    ref_img: imageBlob,
+                    video: new File([mp4Blob], "video.mp4", { type: "video/mp4" }),
+                    model_id: "wan2.2-animate-move",
+                    model: "wan-pro",
+                });
+
+                if (!result.data[0] || !result.data[0].url) {
+                    throw new Error('Animation API did not return a valid video.');
+                }
+                const outputVideoUrl = result.data[0].url;
+
+                // 4. Display result
+                this.showLoading(true, 'Finalizing...');
+                this.iframeContainer.innerHTML = ''; // Clear again
+                const video = document.createElement('video');
+                video.src = outputVideoUrl;
+                video.controls = true;
+                video.autoplay = true;
+                video.loop = true;
+                video.style.width = '100%';
+                video.style.height = '100%';
+                this.iframeContainer.appendChild(video);
+            }
+
             clear() {
                 this.inputText.value = '';
                 this.updateCharCount();
                 this.hideError();
-                this.translationFrame.src = '';
+                this.iframeContainer.innerHTML = '<iframe id="translationFrame" src=""></iframe>'; // Restore iframe
+                this.translationFrame = document.getElementById('translationFrame'); // Re-bind
             }
 
-            showLoading(show) {
+            showLoading(show, message = 'PROCESSING TRANSLATION...') {
                 this.loadingIndicator.style.display = show ? 'flex' : 'none';
+                this.loadingIndicator.querySelector('span').textContent = message;
                 this.translateBtn.disabled = show;
                 if (show) {
                     this.translateBtn.style.opacity = '0.5';
@@ -868,4 +1036,3 @@
     </script>
 </body>
 </html>
-

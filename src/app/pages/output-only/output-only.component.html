@@ -20,8 +20,13 @@
         </div>
       }
     }
+    @case ('generating') {
+      <div class="loading-container">
+        <p>Generating human video for "{{ inputText() }}"...</p>
+      </div>
+    }
     @case ('translating') {
-      @if (videoUrl(); as video) {
+      @if (outputType() === 'human' ? humanVideoUrl() : videoUrl(); as video) {
         <div class="video-container">
           <video #videoPlayer [src]="video" autoplay playsinline (ended)="onVideoEnded()"></video>
         </div>

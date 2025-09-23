@@ -11,6 +11,7 @@ import {logConsoleMemory} from './utils/memory';
 import {FirebaseDatabase} from '@firebase/database-types';
 import {textNormalizationFunctions} from './text-normalization/controller';
 import {gatewayFunction} from './gateway/controller';
+import {generateHumanVideo} from './human-video';
 
 logConsoleMemory(process.env.NODE_ENV === 'production' ? functions.logger : console);
 
