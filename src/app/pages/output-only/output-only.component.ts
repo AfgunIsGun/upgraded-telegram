@@ -186,7 +186,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       });
       this.ffmpeg.on('log', ({ message }) => console.log(`[FFMPEG]: ${message}`))
       await this.ffmpeg.writeFile('input.mp4', new Uint8Array(await videoBlob.arrayBuffer()));
-      await this.ffmpeg.exec(['-i', 'input.mp4', '-c:v', 'libx264', '-c:a', 'aac', 'output.mp4']);
+      await this.ffmpeg.exec(['-i', 'input.mp4', '-vf', 'scale=1282:720', '-ar', '16000', '-ac', '1', '-c:v', 'libx264', '-c:a', 'aac', 'output.mp4']);
       const reencodedData = await this.ffmpeg.readFile('output.mp4');
       const reencodedBlob = new Blob([(reencodedData as Uint8Array).buffer], { type: 'video/mp4' });
       console.log('[Human Video] Re-encoding complete.');
