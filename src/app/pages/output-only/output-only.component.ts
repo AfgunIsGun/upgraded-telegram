@@ -11,7 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { fromEvent, Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Client } from '@gradio/client';
-import { FFmpeg } from '@ffmpeg/ffmpeg';
+
 
 type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating' | 'preview' | 'generating';
 
@@ -33,7 +33,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   private platformId = inject(PLATFORM_ID);
   private tabBar: HTMLElement;
   private poseEndedSubscription: Subscription;
-  private ffmpeg: FFmpeg;
+  
   private manifestPromise: Promise<void>;
   private wlaslManifest: WordManifest[] = [];
 
@@ -115,9 +115,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   async ngOnInit(): Promise<void> {
     await this.loadManifest();
 
-    if (isPlatformBrowser(this.platformId)) {
-      this.ffmpeg = new FFmpeg();
-    }
+    
 
     this.store.dispatch([
       new SetSetting('receiveVideo', false),
@@ -178,19 +176,6 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       this.humanVideoUrl.set(URL.createObjectURL(videoBlob));
       this.status.set('translating');
 
-      console.log('[Human Video] Forcefully re-encoding video with FFMPEG (libx264 & aac)...');
-      await this.ffmpeg.load({
-        coreURL: '/assets/ffmpeg/ffmpeg-core.js',
-        wasmURL: '/assets/ffmpeg/ffmpeg-core.wasm',
-        workerURL: '/assets/ffmpeg/ffmpeg-core.worker.js',
-      });
-      this.ffmpeg.on('log', ({ message }) => console.log(`[FFMPEG]: ${message}`))
-      await this.ffmpeg.writeFile('input.mp4', new Uint8Array(await videoBlob.arrayBuffer()));
-      await this.ffmpeg.exec(['-i', 'input.mp4', '-vf', 'scale=1282:720', '-ar', '16000', '-ac', '1', '-c:v', 'libx264', '-c:a', 'aac', 'output.mp4']);
-      const reencodedData = await this.ffmpeg.readFile('output.mp4');
-      const reencodedBlob = new Blob([(reencodedData as Uint8Array).buffer], { type: 'video/mp4' });
-      console.log('[Human Video] Re-encoding complete.');
-
       const refImageResponse = await fetch('/assets/human/man.png');
       const refImageBlob = await refImageResponse.blob();
 
@@ -200,7 +185,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       console.log('[Human Video] Sending to external API...');
       const result = await client.predict('/predict', {
         ref_img: refImageBlob,
-        video: { video: reencodedBlob },
+        video: { video: videoBlob },
         model_id: 'wan2.2-animate-move',
         model: 'wan-pro',
       });
