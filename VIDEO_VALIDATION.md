@@ -55,67 +55,16 @@ This will create a new file named `01610_fixed.mp4`.
 
 ## Step 4: Batch Process All Videos (Recommended)
 
-This script will re-encode all videos in the `src/assets/wlasl` directory to the H.264 High profile.
+A script named `fix_videos.sh` has been created in the root of your project to fix all the videos.
 
-**Important:** This will overwrite the original files. Make sure you have a backup if you need one.
+**Important:** This script will overwrite the original files. Make sure you have a backup if you need one.
 
-Create a file named `fix_videos.sh` in your project root with the following content:
-
-```bash
-#!/bin/bash
-
-success_count=0
-fail_count=0
-skipped_count=0
-total_count=0
-
-# Navigate to the script's directory to ensure correct relative paths
-cd "$(dirname "$0")"
-
-for file in src/assets/wlasl/**/*.mp4; do
-  total_count=$((total_count + 1))
-  PROFILE=$(ffprobe -v error -select_streams v:0 -show_entries stream=profile -of csv=p=0 "$file")
-  if [ "$PROFILE" != "High" ]; then
-    echo "Fixing $file (re-encoding to High profile)..."
-    # Use a temporary file to avoid issues with in-place editing
-    ffmpeg -i "$file" -c:v libopenh264 -profile:v high -c:a copy "temp_output.mp4"
-    if [ $? -eq 0 ]; then
-      mv "temp_output.mp4" "$file"
-      if [ $? -eq 0 ]; then
-        echo "Successfully fixed $file"
-        success_count=$((success_count + 1))
-      else
-        echo "Error moving temp file for $file"
-        fail_count=$((fail_count + 1))
-        rm -f "temp_output.mp4"
-      fi
-    else
-      echo "Error processing $file"
-      fail_count=$((fail_count + 1))
-      rm -f "temp_output.mp4"
-    fi
-  else
-    echo "Skipping $file (already High profile)."
-    skipped_count=$((skipped_count + 1))
-  fi
-done
-
-echo ""
-echo "Video processing complete."
-echo "------------------------"
-echo "Total videos processed: $total_count"
-echo "Successfully fixed: $success_count"
-echo "Failed to fix: $fail_count"
-echo "Skipped (already High profile): $skipped_count"
-```
-
-Then, make the script executable and run it:
+To run the script, simply execute the following command in your terminal from the project root:
 
 ```bash
-chmod +x fix_videos.sh
 ./fix_videos.sh
 ```
 
-This script iterates through all videos, checks their profile, and re-encodes them if they are not already using the "High" profile.
+This script will iterate through all videos, checks their profile, and re-encodes them if they are not already using the "High" profile. It will also provide a summary of the process.
 
 After running this, all your videos should be compliant with the API's requirements.
