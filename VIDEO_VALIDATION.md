@@ -1,56 +1,51 @@
 # How to Validate and Fix Videos for the API
 
-The external API requires videos to have both a video and an audio stream. The error "Invalid video type" can occur if a video file is missing an audio stream, even if it's a valid `.mp4` file.
+The external API is sensitive to the video encoding profile. The error "Invalid video type" can occur if the video is not encoded with the correct H.264 profile.
 
-This guide provides steps to check your videos and fix them by adding a silent audio track if one is missing.
+This guide provides steps to check your videos and fix them by re-encoding them to the **H.264 High Profile**.
 
-**Important:** All commands should be run from the root of the project directory (`/workspaces/upgraded-telegram/`).
+## Step 1: Check a Video File's Profile
 
-## Step 1: Check a Video File
-
-You can use `ffprobe` (which comes with `ffmpeg`) to inspect a video file and see its streams.
+You can use `ffprobe` to inspect a video file and see its encoding profile.
 
 ### Commands to Check Your Videos
 
-Here are the commands to check the video files you mentioned:
-
-**Working Video:**
+**Working Video (High Profile):**
 ```bash
 ffprobe -v quiet -print_format json -show_streams ./1.mp4
 ```
 
-**Broken Video 1:**
+**Broken Videos (likely Baseline Profile):**
 ```bash
 ffprobe -v quiet -print_format json -show_streams ./src/assets/wlasl/hello/27172.mp4
 ```
-
-**Broken Video 2:**
 ```bash
 ffprobe -v quiet -print_format json -show_streams ./src/assets/wlasl/a/01610.mp4
 ```
 
 ### How to Interpret the Output
 
--   **Good Video:** The output will be a JSON object with an array of `streams`. A valid video will have at least two entries in the `streams` array: one with `"codec_type": "video"` and another with `"codec_type": "audio"`.
--   **Bad Video:** If the video is missing an audio stream, you will only see a single stream entry with `"codec_type": "video"`.
+In the JSON output for the video stream, look for the `"profile"` field.
+-   **Good Video:** `"profile": "High"`
+-   **Bad Video:** `"profile": "Baseline"` or something other than "High".
 
-## Step 2: Fix a Video by Adding a Silent Audio Track
+## Step 2: Fix a Video by Re-encoding to H.264 High Profile
 
-If a video is missing an audio track, you can fix it by adding a silent one using `ffmpeg`.
+If a video does not have the "High" profile, you can fix it using `ffmpeg`.
 
 ### Command to Fix a Single Video
 
-This command will create a new video file with a silent audio track. Here is an example for one of the broken videos:
+This command will re-encode the video to H.264 High Profile. Here is an example for one of the broken videos:
 
 ```bash
-ffmpeg -i ./src/assets/wlasl/a/01610.mp4 -f lavfi -i anullsrc -c:v copy -c:a aac -shortest ./src/assets/wlasl/a/01610_fixed.mp4
+ffmpeg -i ./src/assets/wlasl/a/01610.mp4 -c:v libopenh264 -profile:v high -c:a copy ./src/assets/wlasl/a/01610_fixed.mp4
 ```
 
-This will create a new file named `01610_fixed.mp4` in the same directory. You can then use this fixed file.
+This will create a new file named `01610_fixed.mp4`.
 
 ## Step 3: Batch Process All Videos (Recommended)
 
-To ensure all videos in the `src/assets/wlasl` directory are valid, you can run a script to check and fix them all. The following command will find all `.mp4` files, check if they have an audio stream, and if not, add a silent one.
+This script will re-encode all videos in the `src/assets/wlasl` directory to the H.264 High profile.
 
 **Important:** This will overwrite the original files. Make sure you have a backup if you need one.
 
@@ -64,10 +59,10 @@ total_count=0
 
 for file in src/assets/wlasl/**/*.mp4; do
   total_count=$((total_count + 1))
-  HAS_AUDIO=$(ffprobe -v error -select_streams a -show_entries stream=codec_type -of csv=p=0 "$file")
-  if [ -z "$HAS_AUDIO" ]; then
-    echo "Fixing $file (adding silent audio)..."
-    ffmpeg -i "$file" -f lavfi -i anullsrc -c:v copy -c:a aac -shortest "temp_output.mp4"
+  PROFILE=$(ffprobe -v error -select_streams v:0 -show_entries stream=profile -of csv=p=0 "$file")
+  if [ "$PROFILE" != "High" ]; then
+    echo "Fixing $file (re-encoding to High profile)..."
+    ffmpeg -i "$file" -c:v libopenh264 -profile:v high -c:a copy "temp_output.mp4"
     if [ $? -eq 0 ]; then
       mv "temp_output.mp4" "$file"
       if [ $? -eq 0 ]; then
@@ -84,7 +79,7 @@ for file in src/assets/wlasl/**/*.mp4; do
       rm -f "temp_output.mp4"
     fi
   else
-    echo "Skipping $file (already has audio)."
+    echo "Skipping $file (already High profile)."
     skipped_count=$((skipped_count + 1))
   fi
 done
@@ -95,9 +90,9 @@ echo "------------------------"
 echo "Total videos processed: $total_count"
 echo "Successfully fixed: $success_count"
 echo "Failed to fix: $fail_count"
-echo "Skipped (already had audio): $skipped_count"
+echo "Skipped (already High profile): $skipped_count"
 ```
 
-This script iterates through all videos. For each video, it checks for an audio stream. If no audio stream is found, it adds a silent AAC audio track and replaces the original video.
+This script iterates through all videos, checks their profile, and re-encodes them if they are not already using the "High" profile.
 
 After running this, all your videos should be compliant with the API's requirements.
