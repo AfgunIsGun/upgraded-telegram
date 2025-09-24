@@ -16,17 +16,17 @@ Here are the commands to check the video files you mentioned:
 
 **Working Video:**
 ```bash
-./node_modules/ffmpeg-static/ffprobe -v quiet -print_format json -show_streams ./1.mp4
+ffprobe -v quiet -print_format json -show_streams ./1.mp4
 ```
 
 **Broken Video 1:**
 ```bash
-./node_modules/ffmpeg-static/ffprobe -v quiet -print_format json -show_streams ./src/assets/wlasl/hello/27172.mp4
+ffprobe -v quiet -print_format json -show_streams ./src/assets/wlasl/hello/27172.mp4
 ```
 
 **Broken Video 2:**
 ```bash
-./node_modules/ffmpeg-static/ffprobe -v quiet -print_format json -show_streams ./src/assets/wlasl/a/01610.mp4
+ffprobe -v quiet -print_format json -show_streams ./src/assets/wlasl/a/01610.mp4
 ```
 
 ### How to Interpret the Output
@@ -43,7 +43,7 @@ If a video is missing an audio track, you can fix it by adding a silent one usin
 This command will create a new video file with a silent audio track. Here is an example for one of the broken videos:
 
 ```bash
-./node_modules/ffmpeg-static/ffmpeg -i ./src/assets/wlasl/a/01610.mp4 -f lavfi -i anullsrc -c:v copy -c:a aac -shortest ./src/assets/wlasl/a/01610_fixed.mp4
+ffmpeg -i ./src/assets/wlasl/a/01610.mp4 -f lavfi -i anullsrc -c:v copy -c:a aac -shortest ./src/assets/wlasl/a/01610_fixed.mp4
 ```
 
 This will create a new file named `01610_fixed.mp4` in the same directory. You can then use this fixed file.
@@ -64,10 +64,10 @@ total_count=0
 
 for file in src/assets/wlasl/**/*.mp4; do
   total_count=$((total_count + 1))
-  HAS_AUDIO=$(./node_modules/ffmpeg-static/ffprobe -v error -select_streams a -show_entries stream=codec_type -of csv=p=0 "$file")
+  HAS_AUDIO=$(ffprobe -v error -select_streams a -show_entries stream=codec_type -of csv=p=0 "$file")
   if [ -z "$HAS_AUDIO" ]; then
     echo "Fixing $file (adding silent audio)..."
-    ./node_modules/ffmpeg-static/ffmpeg -i "$file" -f lavfi -i anullsrc -c:v copy -c:a aac -shortest "temp_output.mp4"
+    ffmpeg -i "$file" -f lavfi -i anullsrc -c:v copy -c:a aac -shortest "temp_output.mp4"
     if [ $? -eq 0 ]; then
       mv "temp_output.mp4" "$file"
       if [ $? -eq 0 ]; then
