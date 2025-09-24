@@ -2,13 +2,23 @@
 
 The external API is sensitive to the video encoding profile. The error "Invalid video type" can occur if the video is not encoded with the correct H.264 profile.
 
-This guide provides steps to check your videos and fix them by re-encoding them to the **H.264 High Profile**.
+This guide provides steps to check your videos and fix them by re-encoding them to the **H.264 High Profile**. These commands are intended to be run on your local machine where `ffmpeg` and `ffprobe` are installed and available in your system's PATH.
 
-## Step 1: Check a Video File's Profile
+## Step 1: Navigate to Your Project Directory
+
+Open a terminal on your local machine and navigate to your project's root directory.
+
+```bash
+cd /home/Golgrax/upgraded-telegram/
+```
+
+## Step 2: Check a Video File's Profile
 
 You can use `ffprobe` to inspect a video file and see its encoding profile.
 
 ### Commands to Check Your Videos
+
+Here are the commands to check the video files you mentioned:
 
 **Working Video (High Profile):**
 ```bash
@@ -29,7 +39,7 @@ In the JSON output for the video stream, look for the `"profile"` field.
 -   **Good Video:** `"profile": "High"`
 -   **Bad Video:** `"profile": "Baseline"` or something other than "High".
 
-## Step 2: Fix a Video by Re-encoding to H.264 High Profile
+## Step 3: Fix a Video by Re-encoding to H.264 High Profile
 
 If a video does not have the "High" profile, you can fix it using `ffmpeg`.
 
@@ -43,11 +53,13 @@ ffmpeg -i ./src/assets/wlasl/a/01610.mp4 -c:v libopenh264 -profile:v high -c:a c
 
 This will create a new file named `01610_fixed.mp4`.
 
-## Step 3: Batch Process All Videos (Recommended)
+## Step 4: Batch Process All Videos (Recommended)
 
 This script will re-encode all videos in the `src/assets/wlasl` directory to the H.264 High profile.
 
 **Important:** This will overwrite the original files. Make sure you have a backup if you need one.
+
+Create a file named `fix_videos.sh` in your project root with the following content:
 
 ```bash
 #!/bin/bash
@@ -57,11 +69,15 @@ fail_count=0
 skipped_count=0
 total_count=0
 
+# Navigate to the script's directory to ensure correct relative paths
+cd "$(dirname "$0")"
+
 for file in src/assets/wlasl/**/*.mp4; do
   total_count=$((total_count + 1))
   PROFILE=$(ffprobe -v error -select_streams v:0 -show_entries stream=profile -of csv=p=0 "$file")
   if [ "$PROFILE" != "High" ]; then
     echo "Fixing $file (re-encoding to High profile)..."
+    # Use a temporary file to avoid issues with in-place editing
     ffmpeg -i "$file" -c:v libopenh264 -profile:v high -c:a copy "temp_output.mp4"
     if [ $? -eq 0 ]; then
       mv "temp_output.mp4" "$file"
@@ -91,6 +107,13 @@ echo "Total videos processed: $total_count"
 echo "Successfully fixed: $success_count"
 echo "Failed to fix: $fail_count"
 echo "Skipped (already High profile): $skipped_count"
+```
+
+Then, make the script executable and run it:
+
+```bash
+chmod +x fix_videos.sh
+./fix_videos.sh
 ```
 
 This script iterates through all videos, checks their profile, and re-encodes them if they are not already using the "High" profile.
