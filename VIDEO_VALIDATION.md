@@ -8,12 +8,23 @@ This guide provides steps to check your videos and fix them by adding a silent a
 
 You can use `ffprobe` (which comes with `ffmpeg`) to inspect a video file and see its streams.
 
-### Command to Check a Video
+### Commands to Check Your Videos
 
-To check a single video, run the following command, replacing `path/to/your/video.mp4` with the actual path to your video:
+Here are the commands to check the video files you mentioned:
 
+**Working Video:**
 ```bash
-/home/Golgrax/upgraded-telegram/node_modules/ffmpeg-static/ffprobe -v quiet -print_format json -show_streams path/to/your/video.mp4
+/home/Golgrax/upgraded-telegram/node_modules/ffmpeg-static/ffprobe -v quiet -print_format json -show_streams /home/Golgrax/upgraded-telegram/1.mp4
+```
+
+**Broken Video 1:**
+```bash
+/home/Golgrax/upgraded-telegram/node_modules/ffmpeg-static/ffprobe -v quiet -print_format json -show_streams /home/Golgrax/upgraded-telegram/src/assets/wlasl/hello/27172.mp4
+```
+
+**Broken Video 2:**
+```bash
+/home/Golgrax/upgraded-telegram/node_modules/ffmpeg-static/ffprobe -v quiet -print_format json -show_streams /home/Golgrax/upgraded-telegram/src/assets/wlasl/a/01610.mp4
 ```
 
 ### How to Interpret the Output
@@ -27,13 +38,13 @@ If a video is missing an audio track, you can fix it by adding a silent one usin
 
 ### Command to Fix a Single Video
 
-This command will create a new video file with a silent audio track.
+This command will create a new video file with a silent audio track. Here is an example for one of the broken videos:
 
 ```bash
-/home/Golgrax/upgraded-telegram/node_modules/ffmpeg-static/ffmpeg -i path/to/your/video.mp4 -f lavfi -i anullsrc -c:v copy -c:a aac -shortest path/to/your/fixed_video.mp4
+/home/Golgrax/upgraded-telegram/node_modules/ffmpeg-static/ffmpeg -i /home/Golgrax/upgraded-telegram/src/assets/wlasl/a/01610.mp4 -f lavfi -i anullsrc -c:v copy -c:a aac -shortest /home/Golgrax/upgraded-telegram/src/assets/wlasl/a/01610_fixed.mp4
 ```
 
-Replace `path/to/your/video.mp4` with the path to the broken video, and `path/to/your/fixed_video.mp4` with the desired output path.
+This will create a new file named `01610_fixed.mp4` in the same directory. You can then use this fixed file.
 
 ## Step 3: Batch Process All Videos (Recommended)
 
