@@ -53,17 +53,47 @@ To ensure all videos in the `src/assets/wlasl` directory are valid, you can run 
 **Important:** This will overwrite the original files. Make sure you have a backup if you need one.
 
 ```bash
+#!/bin/bash
+
+success_count=0
+fail_count=0
+skipped_count=0
+total_count=0
+
 for file in /home/Golgrax/upgraded-telegram/src/assets/wlasl/**/*.mp4; do
+  total_count=$((total_count + 1))
   HAS_AUDIO=$(/home/Golgrax/upgraded-telegram/node_modules/ffmpeg-static/ffprobe -v error -select_streams a -show_entries stream=codec_type -of csv=p=0 "$file")
   if [ -z "$HAS_AUDIO" ]; then
     echo "Fixing $file (adding silent audio)..."
-    /home/Golgrax/upgraded-telegram/node_modules/ffmpeg-static/ffmpeg -i "$file" -f lavfi -i anullsrc -c:v copy -c:a aac -shortest "temp_output.mp4" && mv "temp_output.mp4" "$file"
+    /home/Golgrax/upgraded-telegram/node_modules/ffmpeg-static/ffmpeg -i "$file" -f lavfi -i anullsrc -c:v copy -c:a aac -shortest "temp_output.mp4"
+    if [ $? -eq 0 ]; then
+      mv "temp_output.mp4" "$file"
+      if [ $? -eq 0 ]; then
+        echo "Successfully fixed $file"
+        success_count=$((success_count + 1))
+      else
+        echo "Error moving temp file for $file"
+        fail_count=$((fail_count + 1))
+        rm -f "temp_output.mp4"
+      fi
+    else
+      echo "Error processing $file"
+      fail_count=$((fail_count + 1))
+      rm -f "temp_output.mp4"
+    fi
   else
     echo "Skipping $file (already has audio)."
+    skipped_count=$((skipped_count + 1))
   fi
 done
 
-echo "All videos have been checked and fixed if necessary."
+echo ""
+echo "Video processing complete."
+echo "------------------------"
+echo "Total videos processed: $total_count"
+echo "Successfully fixed: $success_count"
+echo "Failed to fix: $fail_count"
+echo "Skipped (already had audio): $skipped_count"
 ```
 
 This script iterates through all videos. For each video, it checks for an audio stream. If no audio stream is found, it adds a silent AAC audio track and replaces the original video.
