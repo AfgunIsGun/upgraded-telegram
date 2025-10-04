@@ -23,13 +23,13 @@
     }
     @case ('translating') {
       @if (outputType() === 'human') {
-        @if(humanVideoUrl(); as video) {
+        @if (humanVideoUrl(); as video) {
           <div class="video-container">
-            <video #videoPlayer [src]="video" autoplay playsinline (ended)="onVideoEnded()"></video>
+            <video #videoPlayer [src]="video" autoplay muted playsinline (ended)="onVideoEnded()"></video>
           </div>
         }
       } @else {
-        @if(videoUrl(); as video) {
+        @if (videoUrl(); as video) {
           <div class="video-container">
             <video #videoPlayer [src]="video" autoplay playsinline (ended)="onVideoEnded()"></video>
           </div>

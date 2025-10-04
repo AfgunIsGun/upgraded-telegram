@@ -215,6 +215,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       console.log('[Human Video] Displaying local video.');
       this.humanVideoUrl.set(URL.createObjectURL(videoBlob));
       this.status.set('success');
+      setTimeout(() => this.videoPlayer.nativeElement.play(), 0);
     } catch (e) {
       console.error('Human video generation error:', e);
       this.error.set(e.message || 'Human video generation failed.');
