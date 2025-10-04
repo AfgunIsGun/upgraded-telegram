@@ -190,38 +190,39 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  async generateHumanVideo(word: string): Promise<void> {
+  playlist: string[] = [];
+  currentVideoIndex = 0;
+
+  async generateHumanVideo(text: string): Promise<void> {
     this.status.set('generating');
     this.error.set(null);
-    console.log(`[Human Video] Starting generation for: "${word}"`);
+    this.playlist = [];
+    this.currentVideoIndex = 0;
+
+    console.log(`[Human Video] Starting generation for: "${text}"`);
 
     try {
       await this.loadManifest();
 
-      console.log(`[Human Video] Searching for phrase: "${word}"`);
-      let manifestEntry = this.wlaslManifest.find(entry => entry.word === word);
-
-      if (!manifestEntry) {
-        console.log(`[Human Video] Phrase not found, searching for first word...`);
-        const firstWord = word.split(' ')[0];
-        manifestEntry = this.wlaslManifest.find(entry => entry.word === firstWord);
+      const words = text.split(' ').filter(w => w);
+      for (const word of words) {
+        console.log(`[Human Video] Searching for word: "${word}"`);
+        const manifestEntry = this.wlaslManifest.find(entry => entry.word === word);
+        if (manifestEntry) {
+          console.log(`[Human Video] Found video: ${manifestEntry.file}`);
+          const videoPath = `/assets/wlasl/${manifestEntry.word}/${manifestEntry.file}`;
+          this.playlist.push(videoPath);
+        } else {
+          console.log(`[Human Video] No video found for word: "${word}"`);
+        }
       }
-      if (!manifestEntry) {
-        throw new Error(`Video not found for word: "${word}"`);
-      }
-      console.log(`[Human Video] Found video: ${manifestEntry.file}`);
 
-      const videoPath = `/assets/wlasl/${manifestEntry.word}/${manifestEntry.file}`;
-      const videoResponse = await fetch(videoPath);
-      if (!videoResponse.ok) {
-        throw new Error(`Failed to fetch video: ${videoResponse.statusText}`);
+      if (this.playlist.length > 0) {
+        this.playNextVideo();
+        this.status.set('success');
+      } else {
+        throw new Error(`No videos found for the input: "${text}"`);
       }
-      const videoBlob = await videoResponse.blob();
-
-      console.log('[Human Video] Displaying local video.');
-      this.humanVideoUrl.set(URL.createObjectURL(videoBlob));
-      this.status.set('success');
-      setTimeout(() => this.videoPlayer.nativeElement.play(), 0);
     } catch (e) {
       console.error('Human video generation error:', e);
       this.error.set(e.message || 'Human video generation failed.');
@@ -229,12 +230,20 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  playNextVideo(): void {
+    if (this.currentVideoIndex < this.playlist.length) {
+      this.humanVideoUrl.set(this.playlist[this.currentVideoIndex]);
+      setTimeout(() => this.videoPlayer.nativeElement.play(), 0);
+    } else {
+      // Loop from the beginning
+      this.currentVideoIndex = 0;
+      this.playNextVideo();
+    }
+  }
+
   onVideoEnded() {
-    setTimeout(() => {
-      if (this.videoPlayer && this.videoPlayer.nativeElement) {
-        this.videoPlayer.nativeElement.play();
-      }
-    }, 1500);
+    this.currentVideoIndex++;
+    this.playNextVideo();
   }
 
   private async processTranslation(): Promise<void> {
