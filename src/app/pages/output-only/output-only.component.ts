@@ -21,7 +21,7 @@ import {SetSetting} from '../../modules/settings/settings.actions';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {fromEvent, Subscription} from 'rxjs';
 import {tap} from 'rxjs/operators';
-import {Client} from '@gradio/client';
+
 import {FFmpeg} from '@ffmpeg/ffmpeg';
 
 type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating' | 'preview' | 'generating';
@@ -31,7 +31,7 @@ type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating' | 'previe
   templateUrl: './output-only.component.html',
   styleUrls: ['./output-only.component.scss'],
   standalone: true,
-  imports: [SkeletonPoseViewerComponent, HumanPoseViewerComponent, AvatarPoseViewerComponent],
+  imports: [SkeletonPoseViewerComponent],
 })
 export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   private store = inject(Store);
@@ -39,6 +39,8 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   private platformId = inject(PLATFORM_ID);
   private tabBar: HTMLElement;
   private poseEndedSubscription: Subscription;
+  private manifestPromise: Promise<void>;
+  private wlaslManifest: WordManifest[] = [];
   private ffmpeg: FFmpeg;
 
   @ViewChild(SkeletonPoseViewerComponent) poseViewer: SkeletonPoseViewerComponent;
@@ -97,6 +99,30 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       }
     });
+  }
+
+  loadManifest(): Promise<void> {
+    if (!this.manifestPromise) {
+      // Only create the promise once
+      this.manifestPromise = new Promise(async (resolve, reject) => {
+        if (isPlatformBrowser(this.platformId)) {
+          try {
+            console.log('[Human Video] Fetching video manifest...');
+            const response = await fetch('/assets/wlasl-manifest.json');
+            const data = await response.json();
+            this.wlaslManifest = data.words;
+            console.log('[Human Video] Manifest loaded successfully.');
+            resolve();
+          } catch (e) {
+            console.error('Failed to load WLASL manifest:', e);
+            reject(e);
+          }
+        } else {
+          resolve(); // Resolve immediately on server
+        }
+      });
+    }
+    return this.manifestPromise;
   }
 
   ngOnInit(): void {
@@ -181,82 +207,12 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       }
       const videoBlob = await videoResponse.blob();
 
-      console.log('[Human Video] Displaying preview video.');
+      console.log('[Human Video] Displaying local video.');
       this.humanVideoUrl.set(URL.createObjectURL(videoBlob));
-      this.status.set('translating');
-
-      const refImageResponse = await fetch('/assets/human/man.png');
-      const refImageBlob = await refImageResponse.blob();
-
-      console.log('[Human Video] Connecting to external API...');
-      const client = await Client.connect('Wan-AI/Wan2.2-Animate');
-
-      console.log('[Human Video] Sending to external API...');
-      const result = await client.predict('/predict', {
-        ref_img: refImageBlob,
-        video: {video: videoBlob},
-        model_id: 'wan2.2-animate-move',
-        model: 'wan-pro',
-      });
-      console.log('[Human Video] Received response from API.');
-
-      if (!result.data[0]) {
-        const errorMessage = result.data[1] || 'The API returned an empty result.';
-        throw new Error(errorMessage);
-      }
-      console.log('[Human Video] API call successful. Processing final video.');
-
-      const resultUrl = (result.data[0] as any).url;
-      const finalVideoResponse = await fetch(resultUrl);
-      const finalVideoBlob = await finalVideoResponse.blob();
-      this.humanVideoUrl.set(URL.createObjectURL(finalVideoBlob));
-      console.log('[Human Video] Final video displayed.');
+      this.status.set('success');
     } catch (e) {
       console.error('Human video generation error:', e);
       this.error.set(e.message || 'Human video generation failed.');
-      this.status.set('error');
-    }
-  }
-
-  async generateHumanVideo(webmVideoUrl: string): Promise<void> {
-    try {
-      // 1. Load ffmpeg
-      await this.ffmpeg.load({
-        coreURL: '/assets/ffmpeg/ffmpeg-core.js',
-        wasmURL: '/assets/ffmpeg/ffmpeg-core.wasm',
-        workerURL: '/assets/ffmpeg/ffmpeg-core.worker.js',
-      });
-
-      // 2. Fetch and convert video
-      const response = await fetch(webmVideoUrl);
-      const data = await response.arrayBuffer();
-      await this.ffmpeg.writeFile('input.webm', new Uint8Array(data));
-      await this.ffmpeg.exec(['-i', 'input.webm', 'output.mp4']);
-      const mp4Data = await this.ffmpeg.readFile('output.mp4');
-      const mp4Blob = new Blob([(mp4Data as Uint8Array).buffer], {type: 'video/mp4'});
-
-      // 3. Fetch reference image
-      const refImageResponse = await fetch('/assets/human/man.png');
-      const refImageBlob = await refImageResponse.blob();
-
-      // 4. Call Gradio API
-      const client = await Client.connect('Wan-AI/Wan2.2-Animate');
-      const result = await client.predict('/predict', {
-        ref_img: refImageBlob,
-        video: {video: mp4Blob},
-        model_id: 'wan2.2-animate-move',
-        model: 'wan-pro',
-      });
-
-      // 5. Display result
-      const resultUrl = (result.data[0] as any).url;
-      const finalVideoResponse = await fetch(resultUrl);
-      const finalVideoBlob = await finalVideoResponse.blob();
-      this.humanVideoUrl.set(URL.createObjectURL(finalVideoBlob));
-      this.status.set('translating');
-    } catch (e) {
-      console.error('Human video generation error:', e);
-      this.error.set('Human video generation failed. Please try again.');
       this.status.set('error');
     }
   }
@@ -284,7 +240,11 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   retry(): void {
-    this.processTranslation();
+    if (this.outputType() === 'human') {
+      this.generateHumanVideo(this.inputText());
+    } else {
+      this.processTranslation();
+    }
   }
 
   getLanguageDisplayName(code: string): string {
