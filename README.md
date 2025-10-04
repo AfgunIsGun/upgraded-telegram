@@ -67,3 +67,5 @@ npm run build:full && \
 npx cap sync ios && \
 npx cap run ios
 ```
+
+YEEPPEE!!
