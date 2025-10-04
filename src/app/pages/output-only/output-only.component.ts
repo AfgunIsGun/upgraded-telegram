@@ -1,31 +1,37 @@
-import { Component, OnInit, OnDestroy, inject, signal, effect, ViewChild, AfterViewInit, PLATFORM_ID, ElementRef } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Store } from '@ngxs/store';
-import { isPlatformBrowser } from '@angular/common';
-import { SkeletonPoseViewerComponent } from '../translate/pose-viewers/skeleton-pose-viewer/skeleton-pose-viewer.component';
-import { HumanPoseViewerComponent } from '../translate/pose-viewers/human-pose-viewer/human-pose-viewer.component';
-import { AvatarPoseViewerComponent } from '../translate/pose-viewers/avatar-pose-viewer/avatar-pose-viewer.component';
-import { SetSpokenLanguageText, SetSpokenLanguage, SetSignedLanguage } from '../../modules/translate/translate.actions';
-import { SetSetting } from '../../modules/settings/settings.actions';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { fromEvent, Subscription } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { Client } from '@gradio/client';
-
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  inject,
+  signal,
+  effect,
+  ViewChild,
+  AfterViewInit,
+  PLATFORM_ID,
+  ElementRef,
+} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
+import {Store} from '@ngxs/store';
+import {isPlatformBrowser} from '@angular/common';
+import {SkeletonPoseViewerComponent} from '../translate/pose-viewers/skeleton-pose-viewer/skeleton-pose-viewer.component';
+import {HumanPoseViewerComponent} from '../translate/pose-viewers/human-pose-viewer/human-pose-viewer.component';
+import {AvatarPoseViewerComponent} from '../translate/pose-viewers/avatar-pose-viewer/avatar-pose-viewer.component';
+import {SetSpokenLanguageText, SetSpokenLanguage, SetSignedLanguage} from '../../modules/translate/translate.actions';
+import {SetSetting} from '../../modules/settings/settings.actions';
+import {toSignal} from '@angular/core/rxjs-interop';
+import {fromEvent, Subscription} from 'rxjs';
+import {tap} from 'rxjs/operators';
+import {Client} from '@gradio/client';
+import {FFmpeg} from '@ffmpeg/ffmpeg';
 
 type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating' | 'preview' | 'generating';
-
-interface WordManifest {
-  word: string;
-  file: string;
-}
 
 @Component({
   selector: 'app-output-only',
   templateUrl: './output-only.component.html',
   styleUrls: ['./output-only.component.scss'],
   standalone: true,
-  imports: [SkeletonPoseViewerComponent],
+  imports: [SkeletonPoseViewerComponent, HumanPoseViewerComponent, AvatarPoseViewerComponent],
 })
 export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   private store = inject(Store);
@@ -33,31 +39,52 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   private platformId = inject(PLATFORM_ID);
   private tabBar: HTMLElement;
   private poseEndedSubscription: Subscription;
-  
-  private manifestPromise: Promise<void>;
-  private wlaslManifest: WordManifest[] = [];
+  private ffmpeg: FFmpeg;
 
   @ViewChild(SkeletonPoseViewerComponent) poseViewer: SkeletonPoseViewerComponent;
   @ViewChild('videoPlayer') videoPlayer: ElementRef<HTMLVideoElement>;
 
+  // State as signals
   status = signal<Status>('idle');
   error = signal<string | null>(null);
+
+  // Input from query params
   inputText = signal('');
   fromLanguage = signal('');
   toLanguage = signal('');
   outputType = signal('skeleton');
+
+  // Data from store
   pose = toSignal(this.store.select(state => state.translate.signedLanguagePose));
   videoUrl = toSignal(this.store.select(state => state.translate.signedLanguageVideo));
   humanVideoUrl = signal<string | null>(null);
   poseViewerSetting = toSignal(this.store.select(state => state.settings.poseViewer));
 
   constructor() {
-    if (isPlatformBrowser(this.platformId)) {
-      this.tabBar = document.querySelector('ion-tab-bar');
-      if (this.tabBar) {
-        this.tabBar.style.display = 'none';
+    effect(() => {
+      const pose = this.pose();
+      if (pose && this.status() === 'loading') {
+        this.status.set('preview');
+        this.store.dispatch(new SetSetting('receiveVideo', true));
       }
-    }
+    });
+
+    effect(() => {
+      const video = this.videoUrl();
+      if (video && this.status() === 'preview') {
+        if (this.outputType() === 'human') {
+          this.status.set('generating');
+          this.generateHumanVideo(video);
+        } else {
+          this.status.set('translating');
+          setTimeout(() => {
+            if (this.videoPlayer) {
+              this.videoPlayer.nativeElement.playbackRate = 1;
+            }
+          }, 0);
+        }
+      }
+    });
 
     // Main trigger effect
     effect(() => {
@@ -70,52 +97,16 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       }
     });
-
-    // Original skeleton effect for pose -> preview
-    effect(() => {
-      const pose = this.pose();
-      if (pose && this.status() === 'loading') {
-        this.status.set('preview');
-        this.store.dispatch(new SetSetting('receiveVideo', true));
-      }
-    });
-
-    // Original skeleton effect for video -> translating
-    effect(() => {
-      const video = this.videoUrl();
-      if (video && this.status() === 'preview' && this.outputType() === 'skeleton') {
-        this.status.set('translating');
-      }
-    });
   }
 
-  loadManifest(): Promise<void> {
-    if (!this.manifestPromise) { // Only create the promise once
-      this.manifestPromise = new Promise(async (resolve, reject) => {
-        if (isPlatformBrowser(this.platformId)) {
-          try {
-            console.log('[Human Video] Fetching video manifest...');
-            const response = await fetch('/assets/wlasl-manifest.json');
-            const data = await response.json();
-            this.wlaslManifest = data.words;
-            console.log('[Human Video] Manifest loaded successfully.');
-            resolve();
-          } catch (e) {
-            console.error('Failed to load WLASL manifest:', e);
-            reject(e);
-          }
-        } else {
-          resolve(); // Resolve immediately on server
-        }
-      });
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.tabBar = document.querySelector('ion-tab-bar');
+      if (this.tabBar) {
+        this.tabBar.style.display = 'none';
+      }
+      this.ffmpeg = new FFmpeg();
     }
-    return this.manifestPromise;
-  }
-
-  async ngOnInit(): Promise<void> {
-    await this.loadManifest();
-
-    
 
     this.store.dispatch([
       new SetSetting('receiveVideo', false),
@@ -127,15 +118,33 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.route.queryParams.subscribe(params => {
       this.status.set('idle');
-      this.humanVideoUrl.set(null);
-      this.inputText.set(params['text']?.toLowerCase() || '');
+      this.inputText.set(params['text'] || '');
       this.fromLanguage.set(params['from'] || 'en');
-      this.toLanguage.set(params['to'] || 'ase');
+
+      let toLang = params['to'] || 'ase';
+      if (toLang === 'asl') toLang = 'ase';
+      if (toLang === 'gsl') toLang = 'gsg';
+      this.toLanguage.set(toLang);
       this.outputType.set(params['output'] || 'skeleton');
     });
   }
 
   ngAfterViewInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => {
+        if (this.poseViewer) {
+          const pose = this.poseViewer.poseEl().nativeElement;
+          this.poseEndedSubscription = fromEvent(pose, 'ended$')
+            .pipe(
+              tap(async () => {
+                pose.play();
+              })
+            )
+            .subscribe();
+        }
+      }, 0);
+    }
+
     if (this.videoPlayer) {
       this.videoPlayer.nativeElement.playbackRate = 1;
     }
@@ -185,7 +194,7 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       console.log('[Human Video] Sending to external API...');
       const result = await client.predict('/predict', {
         ref_img: refImageBlob,
-        video: { video: videoBlob },
+        video: {video: videoBlob},
         model_id: 'wan2.2-animate-move',
         model: 'wan-pro',
       });
@@ -202,7 +211,6 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
       const finalVideoBlob = await finalVideoResponse.blob();
       this.humanVideoUrl.set(URL.createObjectURL(finalVideoBlob));
       console.log('[Human Video] Final video displayed.');
-
     } catch (e) {
       console.error('Human video generation error:', e);
       this.error.set(e.message || 'Human video generation failed.');
@@ -210,10 +218,55 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  onVideoEnded() {
-    if (this.videoPlayer && this.videoPlayer.nativeElement) {
-      this.videoPlayer.nativeElement.play();
+  async generateHumanVideo(webmVideoUrl: string): Promise<void> {
+    try {
+      // 1. Load ffmpeg
+      await this.ffmpeg.load({
+        coreURL: '/assets/ffmpeg/ffmpeg-core.js',
+        wasmURL: '/assets/ffmpeg/ffmpeg-core.wasm',
+        workerURL: '/assets/ffmpeg/ffmpeg-core.worker.js',
+      });
+
+      // 2. Fetch and convert video
+      const response = await fetch(webmVideoUrl);
+      const data = await response.arrayBuffer();
+      await this.ffmpeg.writeFile('input.webm', new Uint8Array(data));
+      await this.ffmpeg.exec(['-i', 'input.webm', 'output.mp4']);
+      const mp4Data = await this.ffmpeg.readFile('output.mp4');
+      const mp4Blob = new Blob([(mp4Data as Uint8Array).buffer], {type: 'video/mp4'});
+
+      // 3. Fetch reference image
+      const refImageResponse = await fetch('/assets/human/man.png');
+      const refImageBlob = await refImageResponse.blob();
+
+      // 4. Call Gradio API
+      const client = await Client.connect('Wan-AI/Wan2.2-Animate');
+      const result = await client.predict('/predict', {
+        ref_img: refImageBlob,
+        video: {video: mp4Blob},
+        model_id: 'wan2.2-animate-move',
+        model: 'wan-pro',
+      });
+
+      // 5. Display result
+      const resultUrl = (result.data[0] as any).url;
+      const finalVideoResponse = await fetch(resultUrl);
+      const finalVideoBlob = await finalVideoResponse.blob();
+      this.humanVideoUrl.set(URL.createObjectURL(finalVideoBlob));
+      this.status.set('translating');
+    } catch (e) {
+      console.error('Human video generation error:', e);
+      this.error.set('Human video generation failed. Please try again.');
+      this.status.set('error');
     }
+  }
+
+  onVideoEnded() {
+    setTimeout(() => {
+      if (this.videoPlayer && this.videoPlayer.nativeElement) {
+        this.videoPlayer.nativeElement.play();
+      }
+    }, 1500);
   }
 
   private async processTranslation(): Promise<void> {
@@ -231,23 +284,19 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   retry(): void {
-    if (this.outputType() === 'human') {
-      this.generateHumanVideo(this.inputText());
-    } else {
-      this.processTranslation();
-    }
+    this.processTranslation();
   }
 
   getLanguageDisplayName(code: string): string {
-    const languageMap: { [key: string]: string } = {
-      'en': 'English',
-      'de': 'German',
-      'fr': 'French',
-      'es': 'Spanish',
-      'ase': 'American Sign Language',
-      'gsg': 'German Sign Language',
-      'fsl': 'French Sign Language',
-      'auto': 'Auto-detect'
+    const languageMap: {[key: string]: string} = {
+      en: 'English',
+      de: 'German',
+      fr: 'French',
+      es: 'Spanish',
+      ase: 'American Sign Language',
+      gsg: 'German Sign Language',
+      fsl: 'French Sign Language',
+      auto: 'Auto-detect',
     };
 
     return languageMap[code] || code.toUpperCase();
