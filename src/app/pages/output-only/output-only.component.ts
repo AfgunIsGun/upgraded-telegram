@@ -209,11 +209,21 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
         console.log(`[Human Video] Searching for word: "${word}"`);
         const manifestEntry = this.wlaslManifest.find(entry => entry.word === word);
         if (manifestEntry) {
-          console.log(`[Human Video] Found video: ${manifestEntry.file}`);
+          console.log(`[Human Video] Found video for word: ${manifestEntry.file}`);
           const videoPath = `/assets/wlasl/${manifestEntry.word}/${manifestEntry.file}`;
           this.playlist.push(videoPath);
         } else {
-          console.log(`[Human Video] No video found for word: "${word}"`);
+          console.log(`[Human Video] No video found for word: "${word}". Spelling it out.`);
+          for (const char of word) {
+            const letterEntry = this.wlaslManifest.find(entry => entry.word === char);
+            if (letterEntry) {
+              console.log(`[Human Video] Found video for letter: ${letterEntry.file}`);
+              const videoPath = `/assets/wlasl/${letterEntry.word}/${letterEntry.file}`;
+              this.playlist.push(videoPath);
+            } else {
+              console.log(`[Human Video] No video found for letter: "${char}"`);
+            }
+          }
         }
       }
 
