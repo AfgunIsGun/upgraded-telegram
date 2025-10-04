@@ -242,8 +242,14 @@ export class OutputOnlyComponent implements OnInit, OnDestroy, AfterViewInit {
 
   playNextVideo(): void {
     if (this.currentVideoIndex < this.playlist.length) {
-      this.humanVideoUrl.set(this.playlist[this.currentVideoIndex]);
-      setTimeout(() => this.videoPlayer.nativeElement.play(), 0);
+      const videoUrl = this.playlist[this.currentVideoIndex];
+      if (videoUrl) {
+        this.humanVideoUrl.set(videoUrl);
+        setTimeout(() => this.videoPlayer.nativeElement.play(), 0);
+      } else {
+        // Skip to the next video if the current one is not found
+        this.onVideoEnded();
+      }
     } else {
       // Loop from the beginning
       this.currentVideoIndex = 0;
