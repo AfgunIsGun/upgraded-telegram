@@ -21,23 +21,10 @@
         </div>
       }
     }
-    @case ('translating') {
-      @if (outputType() === 'human') {
-        @if (humanVideoUrl(); as video) {
-          <div class="video-container">
-            <video #videoPlayer [src]="video" autoplay muted playsinline (ended)="onVideoEnded()"></video>
-          </div>
-        }
-      } @else {
-        @if (videoUrl(); as video) {
-          <div class="video-container">
-            <video #videoPlayer [src]="video" autoplay playsinline (ended)="onVideoEnded()"></video>
-          </div>
-        }
-      }
-      @if (!humanVideoUrl() && !videoUrl()) {
-        <div class="loading-container">
-          <p>Generating video for "{{ inputText() }}"...</p>
+    @case ('success') {
+      @if (humanVideoUrl(); as video) {
+        <div class="video-container">
+          <video #videoPlayer [src]="video" autoplay muted playsinline (ended)="onVideoEnded()"></video>
         </div>
       }
     }
