@@ -26,6 +26,11 @@ import {FFmpeg} from '@ffmpeg/ffmpeg';
 
 type Status = 'loading' | 'error' | 'success' | 'idle' | 'translating' | 'preview' | 'generating';
 
+interface WordManifest {
+  word: string;
+  file: string;
+}
+
 @Component({
   selector: 'app-output-only',
   templateUrl: './output-only.component.html',
